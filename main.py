@@ -8,41 +8,83 @@
 
 # Created on 2023-03-20
 
-# WEB ARTICLES USED AS REFERENCES:
-# 1. Tkinter Application to Switch Between Different Page Frames
-#  -> https://www.geeksforgeeks.org/tkinter-application-to-switch-between-different-page-frames/
-# 2. Python GUI examples (Tkinter Tutorial)
-#  -> https://likegeeks.com/python-gui-examples-tkinter-tutorial/
-# 3. Python Tkinter – Entry Widget
-#  -> https://www.geeksforgeeks.org/python-tkinter-entry-widget/
-# 4. How to justify text in label in Tkinter
-#  -> https://stackoverflow.com/questions/37318060
-# 5. RadioButton in Tkinter | Python
-#  -> https://www.geeksforgeeks.org/radiobutton-in-tkinter-python/
-# 6. Tkinter Grid
-#  -> https://www.pythontutorial.net/tkinter/tkinter-grid/
+# [1] WEB ARTICLES USED AS REFERENCES:
+# 
+# (On 2023-03-20)
+#  1. Tkinter Application to Switch Between Different Page Frames
+#   -> https://www.geeksforgeeks.org/tkinter-application-to-switch-between-different-page-frames/
+#  2. Python GUI examples (Tkinter Tutorial)
+#   -> https://likegeeks.com/python-gui-examples-tkinter-tutorial/
+#  3. Python Tkinter – Entry Widget
+#   -> https://www.geeksforgeeks.org/python-tkinter-entry-widget/
+#  4. How to justify text in label in Tkinter
+#   -> https://stackoverflow.com/questions/37318060
+#  5. RadioButton in Tkinter | Python
+#   -> https://www.geeksforgeeks.org/radiobutton-in-tkinter-python/
+#  6. Tkinter Grid
+#   -> https://www.pythontutorial.net/tkinter/tkinter-grid/
+# 
+# (On 2023-03-21)
+#  7. How do I close a tkinter window?
+#   -> https://stackoverflow.com/questions/110923
+#  8. How to set the text/value/content of an `Entry` widget using a button in tkinter
+#   -> https://stackoverflow.com/questions/16373887
+#  9. Python Switch Statement – Switch Case Example
+#   -> https://www.freecodecamp.org/news/python-switch-statement-switch-case-example/
+# 10. Disable / Enable Button in TKinter
+#   -> https://stackoverflow.com/questions/53580507
 
-# CODING CONVENTIONS:
+# [2] CODING CONVENTIONS:
 # 1. Use single quote (') instead of double quotes (") when specifying strings
 # 2. Equal signs used as function argument are not wrapped by empty space bars
 # 3. 'SipesatScr...' class name prefix indicates a class of the superclass 'tk.Frame'
 
-# VARIABLE CONVENTIONS:
-# 1. 'Jenis Data' radio button in the harvester menu has the following possible IntVar values:
+# [3] VARIABLE CONVENTIONS:
+# 1. 'Kategori' (category)
+#  -> ['r'] = The Risat Research menu category
+#  -> ['c'] = The Risat ComService menu category
+# 2. 'Jenis Data' (datatype) radio button in the harvester menu has the following possible IntVar values:
 #  -> [0] = Data Ringkasan
 #  -> [1] = Data Detil Lengkap
-# 2. 'Data Hasil Panenan' radio button in the harvester menu has the following possible StringVar values:
+# 3. 'Data Hasil Panenan' (output) radio button in the harvester menu has the following possible StringVar values:
 #  -> ['dana'] = Risat Dana Penelitian/AbdiMas
 #  -> ['arsip'] = Risat Arsip Penelitian/AbdiMas
 #  -> ['lapakhir'] = = Risat Laporan Akhir Penelitian/AbdiMas
 
+# [4] APPLICATION MECHANISM:
+# 1. Upon successful login, the username & password credentials are stored
+#    as variables inside the 'controller' class instance.
+#    These variables will then be flushed out upon loggin out.
+
+# [5] "RISAT DATA_PROMPT" ARRAY CONVENTIONS:
+# data_prompt = {
+#   'http_response'     --> the http_response after posting
+#   'html_content'      --> 'http_response', converted into an XML-compatible HTML string
+#   'viewstate'         --> the view state hidden ASPX form value (e.g. "/wEPaA8FDzhkYjBkY2I5ODVlM2YzZmTXigQ6dU1GUsc1Dgno6Z11")
+#   'viewstategen'      --> the viewstategen hidden ASPX form value (e.g. "28239525")
+#   'eventvalidation'   --> the eventvalidation hidden ASPX form value (e.g. "/wEdABiKTaCYJNZ8hl3vzC5OJBTzquwmUN/b9MQs90SJn/")
+#   'button_name'       --> the entry row's submit button 'name' attribute (e.g. "ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$btdetil1")
+#   'kodetran_prop'     --> the entry row's hidden 'kodetran' tag attribute name (e.g. "ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$kodetran1")
+#   'kodetran_val'      --> the entry row's hidden 'kodetran' tag attribute value (e.g. "842BA8DC-F7FA-48CE-A8B8-3106876A3B1E")
+#   'stat'              --> backward compatibility of 'stat_prop'
+#   'stat_prop'         --> the entry row's hidden 'stat' tag attribute name (e.g. "ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$stat1")
+#   'stat_val'          --> the entry row's hidden 'stat' tag attribute value (e.g. "M" for "belum terealisasi, or "C" for "terealisasi")
+# }
+
+# [6] REFERENCES TO FILES INSIDE THE AUTHOR'S PERSONAL COMPUTER
+# 1. The harvester script that gets past the Risat login page
+#   -> /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
+
 # --------------------------- CODE PREAMBLE --------------------------- #
 
 # Modules import
+from lxml import html
+from tkinter import messagebox
 from tkinter import scrolledtext
 from tkinter import ttk
 from tkinter import IntVar
 from tkinter import StringVar
+import requests as rq
 import tkinter as tk
 
 # ------------------------ CLASSES DECLARATION ------------------------ #
@@ -57,6 +99,9 @@ class MainGUI(tk.Tk):
         # Instantiating Tkinter instance
         tk.Tk.__init__(self, *args, **kwargs)
         
+        # Configuring app's identity
+        self.title(APP_NAME)
+        
         # Establishing the GUI container
         container = tk.Frame(self)
         container.pack(side='top', fill='both', expand=True)
@@ -65,6 +110,13 @@ class MainGUI(tk.Tk):
         
         # Setting up the list of frames
         self.frames = {}
+        
+        # Initializing the credential variables and harvester arguments
+        self.password = ''
+        self.username = ''
+        self.harvest_category = ''
+        self.harvest_datatype = -1
+        self.harvest_output = ''
         
         # Iterating through frame list
         for F in FRAME_CLASSES:
@@ -96,25 +148,70 @@ class SipesatScrLogin(tk.Frame):
     
     # The function that will be triggered when the 'ABOUT' button is pressed
     def on_about_button_click(self):
-        pass
+        about_title = 'TENTANG'
+        about_content = 'SiPe.Sat -- Sistem Pemanen Risat Satya Wacana\n\nDibuat oleh Samarthya Lykamanuella\n\nDirektorat Riset dan Pengabdian Masyarakat (DRPM)\n\nUniversitas Kristen Satya Wacana\n\n@ 2023'
+        # Showing the info box
+        messagebox.showinfo(about_title, about_content)
     
     # The function that will be triggered when the 'LICENSE' button is pressed
     def on_license_button_click(self):
-        pass
+        license_title = 'LISENSI'
+        license_content = 'Program ini dilisensi menggunakan lisensi MIT\nKunjungi https://spdx.org/licenses/MIT.html untuk informasi lebih lanjut'
+        messagebox.showinfo(license_title, license_content)
     
     # The function that will be triggered when the 'EXIT' button is pressed
     def on_exit_button_click(self):
-        pass
+        # Showing a message box that prompts the user whether to leave the app
+        exit_title = 'KELUAR APLIKASI'
+        exit_content = 'Apakah Anda yakin untuk keluar dari aplikasi?'
+        res = messagebox.askquestion(exit_title, exit_content)
+        if res == 'yes':
+            # The user confirms to leave the app
+            print('[SipesatScrLogin] :: See You :(')
+            self.controller.destroy()
+        else:
+            # Just do nothing
+            pass
     
     # The function that will be triggered when the 'LOGIN' form button is pressed
     def on_submit_button_click(self, username, password):
-        pass
+        
+        # Validating the input credentials
+        validation = BackEndLoginChecker()
+        res = validation.validate(username, password)
+        
+        if res:
+            # Login successful
+            login_success_title = 'LOGIN BERHASIL'
+            login_success_content = f'Anda telah berhasil log masuk.\nSelamat datang, {username}!'
+            messagebox.showinfo(login_success_title, login_success_content)
+            
+            # Upon successful login, store the login credentials inside the 'controller'`s
+            # class-wide variable
+            self.controller.password = password
+            self.controller.username = username
+            print('[SipesatScrLogin] :: Credential variables set!')
+            
+            # Upon successful login, clear the password input
+            self.pass_input.delete(0, tk.END)
+            
+            # Upon successful login, switch to main menu screen
+            self.controller.raise_frame(SipesatScrMainMenu)
+        else:
+            # Login failed
+            login_failed_title = 'LOGIN GAGAL'
+            login_failed_content = 'Nama pengguna atau kata sandi salah!\n\nMungkin juga disebabkan karena koneksi internet yang bermasalah\n\nSilahkan coba lagi'
+            messagebox.showerror(login_failed_title, login_failed_content)
     
     # The __init__ function
     def __init__(self, parent, controller):
         
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
+        
+        # Assigning the variables for use by other methods in the class
+        self.parent = parent
+        self.controller = controller
         
         # The header title displaying the screen's title 
         header_title = ttk.Label(self, text=STRING_HEADER_TITLE, font=FONT_HEADER_TITLE)
@@ -147,6 +244,7 @@ class SipesatScrLogin(tk.Frame):
         # Password input prompt
         pass_input = ttk.Entry(form_frame, width=50, show='*')
         pass_input.grid(row=1, column=1, padx=2, pady=2)
+        self.pass_input = pass_input # --- for uses by other functions in the class
         # The submit button
         submit_text = 'LOGIN'
         submit_button = ttk.Button(form_frame, text=submit_text,
@@ -181,17 +279,39 @@ class SipesatScrMainMenu(tk.Frame):
     
     # The function that will be triggered when the menu [1] button is selected/clicked
     def on_menu_1_button_click(self):
-        pass
+        self.controller.raise_frame(SipesatScrResearch)
     
     # The function that will be triggered when the menu [2] button is selected/clicked
     def on_menu_2_button_click(self):
-        pass
+        self.controller.raise_frame(SipesatScrComService)
+    
+    # The function that will be triggered when the logout button is selected/clicked
+    def on_logout_button_click(self):
+        # Showing a message box that prompts the user whehter to logout from the current session
+        logout_title = 'LOG OUT'
+        logout_content = 'Apakah Anda yakin untuk log keluar dari sesi ini?'
+        res = messagebox.askquestion(logout_title, logout_content)
+        if res == 'yes':
+            # Upon logging out, flush out the credential variables
+            self.controller.password = ''
+            self.controller.username = ''
+            print('[SipesatScrLogin] :: Credential variables flushed out!')
+            
+            # The user confirms to logout
+            self.controller.raise_frame(SipesatScrLogin)
+        else:
+            # Just do nothing
+            pass
     
     # The __init__ function
     def __init__(self, parent, controller):
         
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
+        
+        # Assigning the variables for use by other methods in the class
+        self.parent = parent
+        self.controller = controller
         
         # The header title displaying the screen's title 
         header_title = ttk.Label(self, text=STRING_HEADER_TITLE, font=FONT_HEADER_TITLE)
@@ -221,6 +341,12 @@ class SipesatScrMainMenu(tk.Frame):
         menu_2_button = ttk.Button(layout_frame, text=menu_2_text, width=45,
             command=lambda: self.on_menu_2_button_click())
         menu_2_button.grid(row=1, column=0, padx=2, pady=2)
+        
+        # Logout button
+        logout_text = 'LOG KELUAR'
+        logout_button = ttk.Button(self, text=logout_text, width=30,
+            command=lambda: self.on_logout_button_click())
+        logout_button.grid(row=4, column=0, padx=5, pady=5)
 
 # The harvester menu for 'research'
 # - Displayed before the actual harvesting process is executed, for
@@ -230,11 +356,17 @@ class SipesatScrResearch(tk.Frame):
     
     # The function that will be triggered when the 'kembali' button is hit
     def on_back_button_click(self):
-        pass
+        self.controller.raise_frame(SipesatScrMainMenu)
     
-    # The function that will be triggered when the 'mulai' button is hit
-    def on_start_button_click(self):
-        pass
+    # The function that will be triggered when the 'lanjut' button is hit
+    def on_next_button_click(self):
+        # Setting the harvest arguments using the controller's 'self' variables
+        self.controller.harvest_category = 'r'
+        self.controller.harvest_datatype = self.radio_data_type.get()
+        self.controller.harvest_output = self.radio_harvest_type.get()
+        
+        # Calling the harvester screen, begin the harvesting process
+        self.controller.raise_frame(SipesatScrHarvest)
     
     # The __init__ function
     def __init__(self, parent, controller):
@@ -246,6 +378,10 @@ class SipesatScrResearch(tk.Frame):
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
         
+        # Assigning the variables for use by other methods in the class
+        self.parent = parent
+        self.controller = controller
+        
         # The header title displaying the screen's title 
         header_title = ttk.Label(self, text=STRING_HEADER_TITLE, font=FONT_HEADER_TITLE)
         header_title.grid(row=0, column=0, padx=10, pady=2)
@@ -256,7 +392,7 @@ class SipesatScrResearch(tk.Frame):
         header_desc.grid(row=1, column=0, padx=10, pady=5)
         
         # The screen's display help
-        help_text = 'Silahkan tentukan basis data dan jenis data yang akan dipanen\nTekan "MULAI" untuk memulai proses pemanenan data Risat'
+        help_text = 'Silahkan tentukan basis data dan jenis data yang akan dipanen\nTekan "LANJUT" untuk memulai proses pemanenan data Risat'
         help_label = ttk.Label(self, text=help_text, font=FONT_REGULAR, anchor='w', justify='left')
         help_label.grid(row=2, column=0, padx=10, pady=10)
         
@@ -313,12 +449,12 @@ class SipesatScrResearch(tk.Frame):
         back_button = ttk.Button(layout_frame_3, text=back_text, width=40,
             command=lambda: self.on_back_button_click())
         back_button.grid(row=0, column=0, padx=2, pady=2)
-        # The 'start' button trigger
+        # The 'next' button trigger
         # Clicking this button proceeds the program to the harvester screen
-        start_text = 'MULAI'
-        start_button = ttk.Button(layout_frame_3, text=start_text, width=40,
-            command=lambda: self.on_start_button_click())
-        start_button.grid(row=0, column=1, padx=2, pady=2)
+        next_text = 'LANJUT'
+        next_button = ttk.Button(layout_frame_3, text=next_text, width=40,
+            command=lambda: self.on_next_button_click())
+        next_button.grid(row=0, column=1, padx=2, pady=2)
 
 # The harvester menu for 'community service'
 # - Displayed before the actual harvesting process is executed, for
@@ -328,11 +464,17 @@ class SipesatScrComService(tk.Frame):
     
     # The function that will be triggered when the 'kembali' button is hit
     def on_back_button_click(self):
-        pass
+        self.controller.raise_frame(SipesatScrMainMenu)
     
-    # The function that will be triggered when the 'mulai' button is hit
-    def on_start_button_click(self):
-        pass
+    # The function that will be triggered when the 'lanjut' button is hit
+    def on_next_button_click(self):
+        # Setting the harvest arguments using the controller's 'self' variables
+        self.controller.harvest_category = 'c'
+        self.controller.harvest_datatype = self.radio_data_type.get()
+        self.controller.harvest_output = self.radio_harvest_type.get()
+        
+        # Calling the harvester screen, begin the harvesting process
+        self.controller.raise_frame(SipesatScrHarvest)
     
     # The __init__ function
     def __init__(self, parent, controller):
@@ -344,6 +486,10 @@ class SipesatScrComService(tk.Frame):
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
         
+        # Assigning the variables for use by other methods in the class
+        self.parent = parent
+        self.controller = controller
+        
         # The header title displaying the screen's title 
         header_title = ttk.Label(self, text=STRING_HEADER_TITLE, font=FONT_HEADER_TITLE)
         header_title.grid(row=0, column=0, padx=10, pady=2)
@@ -354,7 +500,7 @@ class SipesatScrComService(tk.Frame):
         header_desc.grid(row=1, column=0, padx=10, pady=5)
         
         # The screen's display help
-        help_text = 'Silahkan tentukan basis data dan jenis data yang akan dipanen\nTekan "MULAI" untuk memulai proses pemanenan data Risat'
+        help_text = 'Silahkan tentukan basis data dan jenis data yang akan dipanen\nTekan "LANJUT" untuk memulai proses pemanenan data Risat'
         help_label = ttk.Label(self, text=help_text, font=FONT_REGULAR, anchor='w', justify='left')
         help_label.grid(row=2, column=0, padx=10, pady=10)
         
@@ -411,22 +557,49 @@ class SipesatScrComService(tk.Frame):
         back_button = ttk.Button(layout_frame_3, text=back_text, width=40,
             command=lambda: self.on_back_button_click())
         back_button.grid(row=0, column=0, padx=2, pady=2)
-        # The 'start' button trigger
+        # The 'next' button trigger
         # Clicking this button proceeds the program to the harvester screen
-        start_text = 'MULAI'
-        start_button = ttk.Button(layout_frame_3, text=start_text, width=40,
-            command=lambda: self.on_start_button_click())
-        start_button.grid(row=0, column=1, padx=2, pady=2)
+        next_text = 'LANJUT'
+        next_button = ttk.Button(layout_frame_3, text=next_text, width=40,
+            command=lambda: self.on_next_button_click())
+        next_button.grid(row=0, column=1, padx=2, pady=2)
 
 # The harvester screen
 # Displaying the current progress of the harvesting process
 class SipesatScrHarvest(tk.Frame):
     
+    # The function that will be triggered when the 'cancel' button is selected/clicked
+    def on_cancel_button_click(self):
+        print('[SipesatScrHarvest] :: Operation cancelled!')
+        if self.controller.harvest_category == 'c':
+            self.controller.raise_frame(SipesatScrComService)
+        elif self.controller.harvest_category == 'r':
+            self.controller.raise_frame(SipesatScrResearch)
+    
+    # The function that will be triggered when the 'cancel' button is selected/clicked
+    def on_start_button_click(self):    
+        # Calling the back-end harvester class
+        harvester = BackEndHarvester()
+        # Begin the harvesting process
+        harvester.execute_harvester(
+            self.controller.username,
+            self.controller.password,
+            self.controller.harvest_category,
+            self.controller.harvest_datatype,
+            self.controller.harvest_output
+        )
+    
     # The __init__ function
     def __init__(self, parent, controller):
         
+        # -------------------- GUI LAYOUT -------------------- #
+        
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
+        
+        # Assigning the variables for use by other methods in the class
+        self.parent = parent
+        self.controller = controller
         
         # The header title displaying the screen's title 
         header_title = ttk.Label(self, text=STRING_HEADER_TITLE, font=FONT_HEADER_TITLE)
@@ -458,6 +631,356 @@ class SipesatScrHarvest(tk.Frame):
         # The log message displayer
         message_area = scrolledtext.ScrolledText(self, width=100, height=10)
         message_area.grid(row=4, column=0, padx=5, pady=5)
+        
+        # :::
+        # Layout: The action buttons
+        layout_actions = tk.Frame(self)
+        layout_actions.grid(row=5, column=0, padx=10, pady=10)
+        
+        # Cancel button
+        # - For debug purposes only: to allow testing out switching between screens
+        #   in an efficient manner
+        # - Upon release, this button should be disabled
+        cancel_text = 'BATALKAN'
+        cancel_button = ttk.Button(layout_actions, text=cancel_text, width=30,
+            command=lambda: self.on_cancel_button_click())
+        cancel_button.grid(row=0, column=0, padx=2, pady=2)
+        # Setting the 'disabled' state of the button
+        # Possible values: 'normal' and 'disabled'
+        cancel_button['state'] = 'normal'
+        
+        # The 'start' button trigger
+        # Clicking this button proceeds the program to begin the harvesting process
+        start_text = 'MULAI PANEN'
+        start_button = ttk.Button(layout_actions, text=start_text, width=40,
+            command=lambda: self.on_start_button_click())
+        start_button.grid(row=0, column=1, padx=2, pady=2)
+    
+# - The class that checks whether the input username/password credentials in
+#   'SipesatScrLogin' screen are correct
+class BackEndLoginChecker():
+    
+    # The __init__ function
+    def __init__(self, *args, **kwargs):
+        
+        # Instantiating 'requests.Session'
+        self.session = rq.Session()
+                
+        # Initializing variables
+        self.password = ''
+        self.username = ''
+    
+    # The variable that checks the validity of the input Risat credentials
+    def validate(self, username, password):
+        
+        # Setting the variables according to the passed arguments
+        self.password = password
+        self.username = username
+        
+        # Opening the Risat homepage
+        risat_homepage = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
+        r = self.session.get(risat_homepage)
+        content = html.fromstring(r.content)
+        
+        # Obtaining the computer-generated hidden values of ASPX (before login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+        
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : viewstate,
+            '__VIEWSTATEGENERATOR' : viewstategen,
+            '__EVENTVALIDATION' : eventvalidation,
+            # The values below are the login information provided by the prompt in the previous code block
+            'txnip1': username,
+            'txpwd1': password,
+            'btlogin1': True
+        }
+        
+        # Logging in to Risat administrator page
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+        
+        # Finding the existence of HTML elements that exist when the input
+        # login credentials are wrong
+        try:
+            prooftest = content.xpath('//div[@class="card-body"]/div[@class="form-group f12"]/text()')[0]
+            if prooftest.__contains__('User atau password anda salah'):
+                # The input credentials are wrong
+                return False
+        except IndexError:
+            # The element is not present in the HTML page,
+            # meaning the login credentials must be correct
+            return True
+        
+        # The default state
+        return False
+
+# The essence of this application: the harvester class
+# This class sorts harvest input arguments (such as data category,
+# data type, and data output) and then execute harvesting the Risat data
+class BackEndHarvester():
+    
+    # The __init__ function
+    # This function instantiates 'requests.Session'
+    # It does nothing else
+    def __init__(self, *args, **kwargs):
+        
+        # Instantiating 'requests.Session'
+        self.session = rq.Session()
+    
+    # The harvest executor
+    # Specify the username and password credentials to mitigate session timeout
+    # Please refer to convention [3] for the possible values of 'category', 'datatype', and 'output'
+    def execute_harvester(self, username, password, category, datatype, output):
+        
+        # :::
+        # Determining the cases of the harvesting arguments passed
+        # This switching-cases require Python version >= v3.10
+        
+        # --------------------- RISAT PENELITIAN --------------------- #
+        if category == 'r': # --- category selected: 'Risat Penelitian'
+            
+            # Determining the cases of the datatype
+            if datatype == 0: # --- 'data ringkasan'
+            
+                # Determining the cases of the data output
+                match output:
+                    case 'arsip':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'dana':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'lapakhir':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                        
+            elif datatype == 1: # --- 'data detil lengkap'
+                
+                # Determining the cases of the data output
+                match output:
+                    case 'arsip':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'dana':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'lapakhir':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+        
+        # ---------------- RISAT PENGABDIAN MASYARAKAT ---------------- #
+        elif category == 'c': # --- category selected: 'Pengabdian Masyarakat'
+            
+            # Determining the cases of the datatype
+            if datatype == 0: # --- 'data ringkasan'
+            
+                # Determining the cases of the data output
+                match output:
+                    case 'arsip':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'dana':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'lapakhir':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                        
+            elif datatype == 1: # --- 'data detil lengkap'
+                
+                # Determining the cases of the data output
+                match output:
+                    case 'arsip':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'dana':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+                    case 'lapakhir':
+                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
+                        pass
+        
+        # ======================== END ======================== #
+    
+    # This function gets past the barrier of Risat login page
+    # - Requires two arguments: the username and password credentials
+    # - Returns 'data_prompt' array
+    def get_risat_login(username, password):
+        # Opening the Risat homepage
+        print('+ Opening Risat homepage...')
+        risat_homepage = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
+        r = self.session.get(risat_homepage)
+        content = html.fromstring(r.content)
+        
+        # Obtaining the computer-generated hidden values of ASPX (before login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+        
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : viewstate,
+            '__VIEWSTATEGENERATOR' : viewstategen,
+            '__EVENTVALIDATION' : eventvalidation,
+            # The values below are the login information provided by the prompt in the previous code block
+            'txnip1': username,
+            'txpwd1': password,
+            'btlogin1': True
+        }
+        
+        # Logging in to Risat administrator page
+        print('+ Logging in...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+        
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+        
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+        
+        # Returning the http response string
+        return data_prompt
+
+    # This function opens "Penelitian" menu tab
+    # Requires 'data_prompt' array obtained from the login function
+    # Returns another 'data_prompt' array
+    def get_risat_penelitian(data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Penelitian" menu...')
+        
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            'ctl00$menu2': True
+        }
+        
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+        
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+        
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+        
+        # Returning the http response string
+        return data_prompt
+    
+    # This function opens "Dana Penelitian" menu after opening the tab "Penelitian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_penelitian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_penelitian_dana_penelitian(data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Penelitian --> Dana Penelitian" menu...')
+        
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu10'
+        }
+        
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+        
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+        
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+        
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens the detail page of "Dana Penelitian" entry row
+    # Requires one argument:
+    # - the data prompt value array in compliance with convention [5] of this file
+    def get_risat_penelitian_dana_penelitian_detil(data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Dana Penelitian" entry row detail page...')
+        
+        # Preparing the http handler URL and payload
+        LOGIN_HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        LOGIN_PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            # The entry row's submit button to 'hit'
+            data_prompt['button_name'] : 'Detil',
+            data_prompt['kodetran_prop'] : data_prompt['kodetran_val'],
+            data_prompt['stat_prop'] : data_prompt['stat_val']
+        }
+        
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(LOGIN_HANDLER_URL, data=LOGIN_PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+        
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+        
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+        
+        # Returning the http response string
+        return data_prompt
 
 # -------------------------- CONSTANT PRESETS -------------------------- #
 
@@ -466,7 +989,7 @@ class SipesatScrHarvest(tk.Frame):
 #   at the very beginning of the application after launch
 # - Need to have at least two classes, otherwise the following error will be casted:
 #   TypeError: 'type' object is not iterable
-FRAME_CLASSES = (SipesatScrHarvest, SipesatScrComService, SipesatScrResearch, SipesatScrMainMenu, SipesatScrLogin)
+FRAME_CLASSES = (SipesatScrLogin, SipesatScrMainMenu, SipesatScrComService, SipesatScrResearch, SipesatScrHarvest,)
 
 # The following constants define font presets used in styling Tkinter widgets
 FONT_HEADER_TITLE = ('Segoe UI', 30, 'bold')
@@ -478,7 +1001,10 @@ FONT_PROGRESS_VALUE = ('Courier New', 14)
 
 # The following constants define the string presets used as template and localization
 STRING_HEADER_TITLE = 'SiPe.Sat'
-STRING_HEADER_DESC = 'Sistem Pemanen Satya Wacana'
+STRING_HEADER_DESC = 'Sistem Pemanen Risat'
+
+# Constants that define application identity
+APP_NAME = 'Sistem Pemanen Risat - UKSW 2023'
 
 # ------------------------- APPLICATION LAUNCH ------------------------- #
 
