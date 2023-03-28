@@ -33,6 +33,16 @@
 #   -> https://www.freecodecamp.org/news/python-switch-statement-switch-case-example/
 # 10. Disable / Enable Button in TKinter
 #   -> https://stackoverflow.com/questions/53580507
+#
+# (On 2023-03-28)
+# 11. How to change the Tkinter label text?
+#   -> https://www.geeksforgeeks.org/how-to-change-the-tkinter-label-text/
+# 12. How to get the text out of a scrolledtext widget?
+#   -> https://stackoverflow.com/questions/53937400
+# 13. Create temporary files and directories using Python-tempfile
+#   -> https://www.geeksforgeeks.org/create-temporary-files-and-directories-using-python-tempfile/
+# 14. Python path separator [duplicate]
+#   -> https://stackoverflow.com/a/50738724
 
 # [2] CODING CONVENTIONS:
 # 1. Use single quote (') instead of double quotes (") when specifying strings
@@ -64,11 +74,24 @@
 #   'viewstategen'      --> the viewstategen hidden ASPX form value (e.g. "28239525")
 #   'eventvalidation'   --> the eventvalidation hidden ASPX form value (e.g. "/wEdABiKTaCYJNZ8hl3vzC5OJBTzquwmUN/b9MQs90SJn/")
 #   'button_name'       --> the entry row's submit button 'name' attribute (e.g. "ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$btdetil1")
+#                           this data array data is used both in 'dana detil' and 'arsip detil' pages
 #   'kodetran_prop'     --> the entry row's hidden 'kodetran' tag attribute name (e.g. "ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$kodetran1")
+#                           this data array data is used only in 'dana detil' pages
 #   'kodetran_val'      --> the entry row's hidden 'kodetran' tag attribute value (e.g. "842BA8DC-F7FA-48CE-A8B8-3106876A3B1E")
+#                           this data array data is used only in 'dana detil' pages
 #   'stat'              --> backward compatibility of 'stat_prop'
 #   'stat_prop'         --> the entry row's hidden 'stat' tag attribute name (e.g. "ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$stat1")
+#                           this data array data is used only in 'dana detil' pages
 #   'stat_val'          --> the entry row's hidden 'stat' tag attribute value (e.g. "M" for "belum terealisasi, or "C" for "terealisasi")
+#                           this data array data is used only in 'dana detil' pages
+#   'idat_prop'         --> the entry row's hidden 'data' tag attribute value (e.g. "ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$idat1")
+#                           this data array data is used only in 'arsip detil' pages
+#   'idat_val'          --> the entry row's hidden 'data' tag attribute value (e.g. "12AAFE6D-7C03-4998-9CB6-1BF4ECA37831")
+#                           this data array data is used only in 'arsip detil' pages
+#   'itgl_prop'         --> the entry row's hidden 'tanggal' tag attribute value (e.g. "ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$itgl1")
+#                           this data array data is used only in 'arsip detil' pages
+#   'itgl_val'          --> the entry row's hidden 'tanggal' tag attribute value (e.g. "2021/01/21")
+#                           this data array data is used only in 'arsip detil' pages
 # }
 
 # [6] REFERENCES TO FILES INSIDE THE AUTHOR'S PERSONAL COMPUTER
@@ -79,12 +102,14 @@
 
 # Modules import
 from lxml import html
+from os.path import sep
 from tkinter import messagebox
 from tkinter import scrolledtext
 from tkinter import ttk
 from tkinter import IntVar
 from tkinter import StringVar
 import requests as rq
+import tempfile as tmp
 import tkinter as tk
 
 # ------------------------ CLASSES DECLARATION ------------------------ #
@@ -582,17 +607,79 @@ class SipesatScrHarvest(tk.Frame):
         harvester = BackEndHarvester()
         # Begin the harvesting process
         harvester.execute_harvester(
+            self, # --- the control object, so that this screen's progress bar values,
+                  # etc., can be manipulated by the harvest executor
             self.controller.username,
             self.controller.password,
             self.controller.harvest_category,
             self.controller.harvest_datatype,
             self.controller.harvest_output
         )
+
+    # The function that changes the header description of this screen
+    def set_header_desc(self, string):
+        self.header_desc.config(text=string)
+
+    # The function that changes the help label of this screen
+    def set_help_label(self, string):
+        self.help_label.config(text=string)
+
+    # The function that changes the progress label of this screen
+    # i.e., changes the percentage display of the progress bar
+    def set_progress_label(self, string):
+        self.progress_label.config(text=string)
+
+    # The function that changes the progress bar progression of this screen
+    def set_progress_bar(self, value):
+        # The value of the variable 'value' must be
+        # in the range of 0 - 100
+        if value > 100:
+            value = 100
+        elif value < 0:
+            value = 0
+
+        # Begin setting the progress bar's progression value
+        self.progress_bar['value'] = value
+
+    # The function that clears this screen's message area's harvest logging output
+    def clear_message_area(self):
+        self.message_area.delete(1.0, tk.END)
+
+    # The function that sets (i.e., clear and write) this screen's message area's
+    # harvest logging output
+    def set_message_area(self, long_string):
+        self.clear_message_area() # --- clearing the content first
+        self.message_area.insert(tk.INSERT, long_string)
+
+    # The function that appends long string to this screen's message area's
+    # harvest logging output
+    # New line character is concatenated in between the existing message area's
+    # content and the string to be appended, by default
+    def append_message_area(self, long_string, new_line=True):
+        # Getting the current content of the message area
+        str_ = self.message_area.get('1.0', tk.END)
+        # Concat with a new line character,
+        # if specified by the argument
+        if new_line:
+            str_ += '\n'
+        # Appending 'long_string' to the existing content,
+        # and then applying to the message area GUI element
+        str_ += long_string
+        self.set_message_area(str_)
     
     # The __init__ function
     def __init__(self, parent, controller):
         
         # -------------------- GUI LAYOUT -------------------- #
+
+        # List of GUI elements that can be accessed by
+        # other (non-'__init__') functions of this class
+        #
+        # self.header_desc      --> the header description
+        # self.help_label       --> the label that indicates the status of the harvest process
+        # self.progress_label   --> to display the percentage of the progress bar
+        # self.progress_bar     --> the progress bar that indicates the progression of the harvest
+        # self.message_area     --> the displayer of the harvest log
         
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
@@ -607,13 +694,13 @@ class SipesatScrHarvest(tk.Frame):
         
         # The header description displaying additional information about the screen
         desc_text = 'Panen Data "[...placeholder...]"'
-        header_desc = ttk.Label(self, text=desc_text, font=FONT_HEADER_DESC)
-        header_desc.grid(row=1, column=0, padx=10, pady=5)
+        self.header_desc = ttk.Label(self, text=desc_text, font=FONT_HEADER_DESC)
+        self.header_desc.grid(row=1, column=0, padx=10, pady=5)
         
         # The screen's display help
         help_text = 'Data "[...placeholder...]" sedang dipanen. Silahkan menunggu...'
-        help_label = ttk.Label(self, text=help_text, font=FONT_REGULAR, anchor='w', justify='left')
-        help_label.grid(row=2, column=0, padx=10, pady=10)
+        self.help_label = ttk.Label(self, text=help_text, font=FONT_REGULAR, anchor='w', justify='left')
+        self.help_label.grid(row=2, column=0, padx=10, pady=10)
         
         # :::
         # Layout harvester progress bar display
@@ -621,16 +708,16 @@ class SipesatScrHarvest(tk.Frame):
         progress_frame.grid(row=3, column=0, padx=10, pady=10)
         # The progress status/value display
         progress_text = 'Status: 67%'
-        progress_label = ttk.Label(progress_frame, text=progress_text, font=FONT_PROGRESS_VALUE, anchor='center', justify='center')
-        progress_label.grid(row=0, column=0, padx=2, pady=5)
+        self.progress_label = ttk.Label(progress_frame, text=progress_text, font=FONT_PROGRESS_VALUE, anchor='center', justify='center')
+        self.progress_label.grid(row=0, column=0, padx=2, pady=5)
         # The progress bar
-        progress_bar = ttk.Progressbar(progress_frame, length=600)
-        progress_bar['value'] = 20
-        progress_bar.grid(row=1, column=0, padx=2, pady=2, sticky='we')
+        self.progress_bar = ttk.Progressbar(progress_frame, length=600)
+        self.progress_bar['value'] = 20
+        self.progress_bar.grid(row=1, column=0, padx=2, pady=2, sticky='we')
         
         # The log message displayer
-        message_area = scrolledtext.ScrolledText(self, width=100, height=10)
-        message_area.grid(row=4, column=0, padx=5, pady=5)
+        self.message_area = scrolledtext.ScrolledText(self, width=100, height=10)
+        self.message_area.grid(row=4, column=0, padx=5, pady=5)
         
         # :::
         # Layout: The action buttons
@@ -732,11 +819,21 @@ class BackEndHarvester():
         
         # Instantiating 'requests.Session'
         self.session = rq.Session()
+
+        # Preparing the temporary folder that will be used
+        # in the recursive scraper of the detail pages
+        self.tmpdir = tmp.mkdtemp(prefix=SCRAPE_TEMP_DIR_PREFIX) + '/'
     
     # The harvest executor
     # Specify the username and password credentials to mitigate session timeout
     # Please refer to convention [3] for the possible values of 'category', 'datatype', and 'output'
-    def execute_harvester(self, username, password, category, datatype, output):
+    #
+    # In the function 'execute_harvester()' below,
+    # the argument 'control' refers to the SipesatScrHarvest
+    # harvesting screen/GUI, which progress bar, labels, and
+    # message area will be manipulated by this harvest executor
+    # function as the harvesting process progresses
+    def execute_harvester(self, control, username, password, category, datatype, output):
         
         # :::
         # Determining the cases of the harvesting arguments passed
@@ -807,11 +904,118 @@ class BackEndHarvester():
                         pass
         
         # ======================== END ======================== #
-    
+
+    # This function recursively obtains the detail pages of Risat
+    # For example, the 'Dana Penelitian Detil' and 'Abdimas Arsip Detil'
+    # Requires no 'data_prompt' passed as argument,
+    # but 'mode' argument is mandated to be passed
+    #
+    # Returns an array which elements are the paths to the
+    # temporary files where each detail pages are stored into
+    #
+    # The possible values of 'mode' argument are as follows:
+    # mode='dana_penelitian'        --> obtains the detail pages of 'Risat Dana Penelitian'
+    # mode='arsip_penelitian'        --> obtains the detail pages of 'Risat Arsip Penelitian'
+    # mode='dana_pengabdian'        --> obtains the detail pages of 'Risat Dana Pengabdian'
+    # mode='arsip_pengabdian'        --> obtains the detail pages of 'Risat Arsip Pengabdian'
+    def get_auto_risat_detil(self, mode):
+
+        # :::
+        # Determining the mode of the risat detil pages to be scraped recursively
+
+        # --------------------- DANA PENELITIAN --------------------- #
+        if mode == 'dana_penelitian':  # --- category selected: 'Dana Penelitian'
+
+            # Preparing the 'data_prompt' arrays
+            data_prompt = self.get_risat_login()
+            data_prompt = self.get_risat_penelitian(data_prompt)
+            data_prompt = self.get_risat_penelitian_dana_penelitian(data_prompt)
+            
+            # Parsing XML tree content
+            content = data_prompt['html_content']
+            
+            # The base XPath location, pointing to each entry row
+            base = '//div[@id="ContentPlaceHolder1_upd1"]/div[@class="mw-100"]//table[@width="100%"]//tr[@valign="top"]'
+            
+            # Reading the HTML entry row hidden ASPX values
+            # These variables below are *arrays*, so they have indices
+            all_kodetran_prop = content.xpath(base + '//input[1][@type="hidden"]/@name')
+            all_kodetran_val = content.xpath(base + '//input[1][@type="hidden"]/@value')
+            all_stat_prop = content.xpath(base + '//input[2][@type="hidden"]/@name')
+            all_stat_val = content.xpath(base + '//input[2][@type="hidden"]/@value')
+            all_submitbtn = content.xpath(base + '//input[@type="submit"]/@name')
+
+            # The temporary 'data_prompt' to be used to revert back to the table page
+            # which lists the detil pages
+            temporary_prompt = data_prompt
+
+            # The array which stores the list of temporary files
+            # that stores the HTTP response of each detail page scraped
+            scrape_array = []
+
+            # Iterating through each entry row element
+            # Assumes all the arrays in the previous code block
+            # are of the same length/size
+            for i in range(len(all_kodetran_prop)-1):
+
+                # Preparing the AJAX payload
+                detail_prompt = {
+                    'viewstate' : temporary_prompt['viewstate'],
+                    'viewstategen' : temporary_prompt['viewstategen'],
+                    'eventvalidation' : temporary_prompt['eventvalidation'],
+                    'button_name' : all_submitbtn[i],
+                    'kodetran_prop' : all_kodetran_prop[i],
+                    'kodetran_val' : all_kodetran_val[i],      
+                    'stat_prop' : all_stat_prop[i],
+                    'stat_val' : all_stat_val[i]
+                }
+                
+                # Obtaining the response data of each individual entry row detail page
+                data = self.get_risat_penelitian_dana_penelitian_detil(detail_prompt)
+                content = data['html_content']
+                response = data['http_response']
+
+                # Writing to the temporary file in the temporary directory
+                tmppath = self.tmpdir + sep + 'dana_penelitian-detil-' + str(i) + '.html'
+                fo = open(tmppath, 'w')
+                fo.write(response)
+                fo.close()
+
+                # Appending to the array
+                scrape_array.insert(i, response)
+                
+                # Logging: printing the basic information
+                judul = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace(
+                    '\r', '').replace('\n', '').strip()
+                print(f'ENTRY_NO: {i} --> {judul}')
+                
+                # Reopening the "Dana Penelitian" list page,
+                # then assign the AJAX response to the temporary array 'temporary_prompt'
+                # The 'data' array is obtained from opening individual entry row detail page
+                temporary_prompt = self.get_risat_penelitian_dana_penelitian(data)
+                continue
+
+            # Returning the list of array
+            return scrape_array
+
+        # --------------------- ARSIP PENELITIAN --------------------- #
+        elif mode == 'arsip_penelitian':  # --- category selected: 'Arsip Penelitian'
+            pass
+
+        # ---------------------- DANA PENGABDIAN ---------------------- #
+        elif mode == 'dana_pengabdian':  # --- category selected: 'Dana Pengabdian'
+            pass
+
+        # ---------------------- ARSIP PENGABDIAN ---------------------- #
+        elif mode == 'arsip_pengabdian':  # --- category selected: 'Arsip Pengabdian'
+            pass
+
+        # ======================== END ======================== #
+
     # This function gets past the barrier of Risat login page
     # - Requires two arguments: the username and password credentials
     # - Returns 'data_prompt' array
-    def get_risat_login(username, password):
+    def get_risat_login(self, username, password):
         # Opening the Risat homepage
         print('+ Opening Risat homepage...')
         risat_homepage = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
@@ -862,7 +1066,7 @@ class BackEndHarvester():
     # This function opens "Penelitian" menu tab
     # Requires 'data_prompt' array obtained from the login function
     # Returns another 'data_prompt' array
-    def get_risat_penelitian(data_prompt):
+    def get_risat_penelitian(self, data_prompt):
         # Logging the calling of the function
         print('+ Opening "Penelitian" menu...')
         
@@ -902,7 +1106,7 @@ class BackEndHarvester():
     # This function opens "Dana Penelitian" menu after opening the tab "Penelitian"
     # - Requires 'data_prompt' array as an unary argument obtained from get_risat_penelitian() function
     # - Returns also another 'data_prompt' array
-    def get_risat_penelitian_dana_penelitian(data_prompt):
+    def get_risat_penelitian_dana_penelitian(self, data_prompt):
         # Logging the calling of the function
         print('+ Opening "Penelitian --> Dana Penelitian" menu...')
         
@@ -942,7 +1146,9 @@ class BackEndHarvester():
     # This function opens the detail page of "Dana Penelitian" entry row
     # Requires one argument:
     # - the data prompt value array in compliance with convention [5] of this file
-    def get_risat_penelitian_dana_penelitian_detil(data_prompt):
+    # The 'data_prompt' argument passed into this function must be
+    # rooted from the function 'get_risat_penelitian_dana_penelitian()'
+    def get_risat_penelitian_dana_penelitian_detil(self, data_prompt):
         # Logging the calling of the function
         print('+ Opening "Dana Penelitian" entry row detail page...')
         
@@ -982,6 +1188,461 @@ class BackEndHarvester():
         # Returning the http response string
         return data_prompt
 
+    # This function opens "Pelaksanaan Kegiatan" menu after opening the tab "Penelitian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_penelitian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_penelitian_pelak_kegi(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Penelitian --> Pelaksanaan Kegiatan" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu9'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens "Laporan Akhir" menu after opening the tab "Penelitian -> Pelaksanaan Kegiatan"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_penelitian_pelak_kegi() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_penelitian_pelak_kegi_lapakhir(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Penelitian --> Pelaksanaan Kegiatan --> Laporan Akhir" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$submenu3'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens "Arsip" menu after opening the tab "Penelitian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_penelitian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_penelitian_arsip(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Penelitian --> Arsip" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu11'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens the detail page of "Arsip" entry row
+    # Requires one argument:
+    # - the data prompt value array in compliance with convention [5] of this file
+    # The 'data_prompt' argument passed into this function must be
+    # rooted from the function 'get_risat_penelitian_arsip()'
+    def get_risat_penelitian_arsip_detil(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Arsip" entry row detail page...')
+
+        # Preparing the http handler URL and payload
+        LOGIN_HANDLER_URL = 'https://risat.uksw.edu/bp3mpage.aspx'
+        LOGIN_PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            # The entry row's submit button to 'hit'
+            data_prompt['button_name'] : 'Detil',
+            data_prompt['idat_prop'] : data_prompt['idat_val'],
+            data_prompt['itgl_prop'] : data_prompt['itgl_val']
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(LOGIN_HANDLER_URL, data=LOGIN_PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning the http response string
+        return data_prompt
+
+    # This function opens "Pengabdian" menu tab
+    # Requires 'data_prompt' array obtained from the login function
+    # Returns another 'data_prompt' array
+    def get_risat_pengabdian(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Pengabdian" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            'ctl00$menu3': True
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning the http response string
+        return data_prompt
+
+    # This function opens "Dana Pengabdian" menu after opening the tab "Pengabdian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_pengabdian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_pengabdian_dana_pengabdian(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Pengabdian --> Dana Pengabdian" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu10'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens the detail page of "Dana Pengabdian" entry row
+    # Requires one argument:
+    # - the data prompt value array in compliance with convention [5] of this file
+    # The 'data_prompt' argument passed into this function must be
+    # rooted from the function 'get_risat_pengabdian_dana_pengabdian()'
+    def get_risat_pengabdian_dana_pengabdian_detil(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Dana Pengabdian" entry row detail page...')
+
+        # Preparing the http handler URL and payload
+        LOGIN_HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        LOGIN_PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            # The entry row's submit button to 'hit'
+            data_prompt['button_name'] : 'Detil',
+            data_prompt['kodetran_prop'] : data_prompt['kodetran_val'],
+            data_prompt['stat_prop'] : data_prompt['stat_val']
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(LOGIN_HANDLER_URL, data=LOGIN_PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning the http response string
+        return data_prompt
+
+    # This function opens "Pelaksanaan Kegiatan" menu after opening the tab "Pengabdian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_pengabdian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_pengabdian_pelak_kegi(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Pengabdian --> Pelaksanaan Kegiatan" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu9'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens "Laporan Akhir" menu after opening the tab "Pengabdian -> Pelaksanaan Kegiatan"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_pengabdian_pelak_kegi() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_pengabdian_pelak_kegi_lapakhir(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Pengabdian --> Pelaksanaan Kegiatan --> Laporan Akhir" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$submenu3'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens "Arsip" menu after opening the tab "Pengabdian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_pengabdian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_pengabdian_arsip(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Pengabdian --> Arsip" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu11'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
+        return data_prompt
+
+    # This function opens the detail page of "Arsip" entry row
+    # Requires one argument:
+    # - the data prompt value array in compliance with convention [5] of this file
+    # The 'data_prompt' argument passed into this function must be
+    # rooted from the function 'get_risat_pengabdian_arsip()'
+    def get_risat_pengabdian_arsip_detil(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Arsip" entry row detail page...')
+
+        # Preparing the http handler URL and payload
+        LOGIN_HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        LOGIN_PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            # The entry row's submit button to 'hit'
+            data_prompt['button_name'] : 'Detil',
+            data_prompt['idat_prop'] : data_prompt['idat_val'],
+            data_prompt['itgl_prop'] : data_prompt['itgl_val']
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(LOGIN_HANDLER_URL, data=LOGIN_PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning the http response string
+        return data_prompt
+
 # -------------------------- CONSTANT PRESETS -------------------------- #
 
 # 'FRAME_CLASSES' is a tuple that defines all the frame classes of the file
@@ -1006,7 +1667,206 @@ STRING_HEADER_DESC = 'Sistem Pemanen Risat'
 # Constants that define application identity
 APP_NAME = 'Sistem Pemanen Risat - UKSW 2023'
 
+# Back-End constants that specify the temporary folder name prefix
+# in which the recursively scraped 'detail' pages are stored into
+SCRAPE_TEMP_DIR_PREFIX = 'sipesat-123-'
+
+# -------------------------- DEVELOPMENT TEST -------------------------- #
+
+# Modules import (for development purposes only)
+from getpass import getpass as input_pass
+
+# The development test class
+class DevelopmentTest():
+
+    # On 2023-03-28
+    # Testing out opening the detail page of 'penelitian arsip' entry row
+    def experiment_1(self):
+        # Preamble
+        print('+ Running experiment_1: Opening "Penelitian Arsip Detil" page ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Opening the 'Penelitian Arsip' page
+        data_prompt = backend.get_risat_login(self.user_, self.pass_)
+        data_prompt = backend.get_risat_penelitian(data_prompt)
+        data_prompt = backend.get_risat_penelitian_arsip(data_prompt)
+
+        # Setting of sample detail page
+        data_prompt['button_name'] = 'ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$btdetil1'
+        data_prompt['idat_prop'] = 'ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$idat1'
+        data_prompt['idat_val'] = '12AAFE6D-7C03-4998-9CB6-1BF4ECA37831'
+        data_prompt['itgl_prop'] = 'ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$itgl1'
+        data_prompt['itgl_val'] = '2021/01/21'
+
+        # Opening the detail page of 'Penelitian Arsip'
+        data_prompt = backend.get_risat_penelitian_arsip_detil(data_prompt)
+
+        # Writing the HTTP response to an external file
+        print('+ Dumping the HTTP response ...')
+        fo = open(HTTP_RESPONSE_DUMPER, 'w')
+        fo.write(str(data_prompt['http_response']))
+
+    # On 2023-03-28
+    # Testing scraping the 'Penelitian > Pelaksanaan Kegiatan > Lap. Akhir' page
+    def experiment_2(self):
+        # Preamble
+        print('+ Running experiment_2: Opening "Penelitian Lap. Akhir" page ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Opening the 'Penelitian Lap. Akhir' page
+        data_prompt = backend.get_risat_login(self.user_, self.pass_)
+        data_prompt = backend.get_risat_penelitian(data_prompt)
+        data_prompt = backend.get_risat_penelitian_pelak_kegi(data_prompt)
+        data_prompt = backend.get_risat_penelitian_pelak_kegi_lapakhir(data_prompt)
+
+        # Writing the the HTTP response to an external file
+        print('+ Dumping the HTTP response ...')
+        fo = open(HTTP_RESPONSE_DUMPER, 'w')
+        fo.write(str(data_prompt['http_response']))
+
+    # On 2023-03-28
+    # Testing scraping the 'Pengabdian > Pelaksanaan Kegiatan > Lap. Akhir' page
+    def experiment_3(self):
+        # Preamble
+        print('+ Running experiment_3: Opening "Pengabdian Lap. Akhir" page ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Opening the 'Pengabdian Lap. Akhir' page
+        data_prompt = backend.get_risat_login(self.user_, self.pass_)
+        data_prompt = backend.get_risat_pengabdian(data_prompt)
+        data_prompt = backend.get_risat_pengabdian_pelak_kegi(data_prompt)
+        data_prompt = backend.get_risat_pengabdian_pelak_kegi_lapakhir(data_prompt)
+
+        # Writing the the HTTP response to an external file
+        print('+ Dumping the HTTP response ...')
+        fo = open(HTTP_RESPONSE_DUMPER, 'w')
+        fo.write(str(data_prompt['http_response']))
+
+    # On 2023-03-28
+    # Testing out opening the detail page of 'pengabdian dana pengabdian' entry row
+    def experiment_4(self):
+        # Preamble
+        print('+ Running experiment_4: Opening "Pengabdian Dana Pengabdian Detil" page ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Opening the 'Pengabdian Dana Pengabdian' page
+        data_prompt = backend.get_risat_login(self.user_, self.pass_)
+        data_prompt = backend.get_risat_pengabdian(data_prompt)
+        data_prompt = backend.get_risat_pengabdian_dana_pengabdian(data_prompt)
+
+        # Setting of sample detail page
+        data_prompt['button_name'] = 'ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$btdetil1'
+        data_prompt['kodetran_prop'] = 'ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$kodetran1'
+        data_prompt['kodetran_val'] = 'D480D002-80B3-42A4-919F-08EDD11F62D5'
+        data_prompt['stat_prop'] = 'ctl00$ContentPlaceHolder1$danacair1$repusulan1$ctl01$stat1'
+        data_prompt['stat_val'] = 'C'
+
+        # Opening the detail page of 'Pengabdian Dana Pengabdian'
+        data_prompt = backend.get_risat_pengabdian_dana_pengabdian_detil(data_prompt)
+
+        # Writing the HTTP response to an external file
+        print('+ Dumping the HTTP response ...')
+        fo = open(HTTP_RESPONSE_DUMPER, 'w')
+        fo.write(str(data_prompt['http_response']))
+
+    # On 2023-03-28
+    # Testing out opening the detail page of 'pengabdian arsip' entry row
+    def experiment_5(self):
+        # Preamble
+        print('+ Running experiment_5: Opening "Pengabdian Arsip Detil" page ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Opening the 'Pengabdian Arsip' page
+        data_prompt = backend.get_risat_login(self.user_, self.pass_)
+        data_prompt = backend.get_risat_pengabdian(data_prompt)
+        data_prompt = backend.get_risat_pengabdian_arsip(data_prompt)
+
+        # Setting of sample detail page
+        data_prompt['button_name'] = 'ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$btdetil1'
+        data_prompt['idat_prop'] = 'ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$idat1'
+        data_prompt['idat_val'] = 'EB969B69-8F86-4790-995F-3833400C42D8'
+        data_prompt['itgl_prop'] = 'ctl00$ContentPlaceHolder1$arsip1$repusul1$ctl01$itgl1'
+        data_prompt['itgl_val'] = '2021/02/09'
+
+        # Opening the detail page of 'Penelitian Arsip'
+        data_prompt = backend.get_risat_pengabdian_arsip_detil(data_prompt)
+
+        # Writing the HTTP response to an external file
+        print('+ Dumping the HTTP response ...')
+        fo = open(HTTP_RESPONSE_DUMPER, 'w')
+        fo.write(str(data_prompt['http_response']))
+
+    # On 2023-03-28
+    # Testing out running the recursive autoscraper of 'Dana Penelitian'
+    def experiment_6(self):
+        # Preamble
+        print('+ Running experiment_6: Running the recursive autoscraper of "Dana Penelitian" ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Getting the array of files of the scraped detail pages
+        array_of_files = backend.get_auto_risat_detil('dana_penelitian')
+
+        # Printing the array
+        print('+ Printing the array ...')
+        print(array_of_files)
+
+    # Wrapper of the developmental tester
+    def launch_experiment_wrapper(self):
+
+        # Processing the request
+        # This switching-cases require Python version >= v3.10
+        match self.nmbr_:
+            case 1:
+                self.experiment_1()
+            case 2:
+                self.experiment_2()
+            case 3:
+                self.experiment_3()
+            case 4:
+                self.experiment_4()
+            case 5:
+                self.experiment_5()
+            case 6:
+                self.experiment_6()
+            case _:
+                print('+ Error! Command not available!')
+
+        # At the end of the experiment test, exit the app
+        # so that the main GUI won't load
+        print('+ Exitting the development test ...')
+        exit()
+
+    # The '__init__' function
+    def __init__(self):
+        # Preamble
+        print('+ Beginning the development test ...')
+
+        # Prompting username and password
+        self.user_ = input('Please enter your username\n >>> ')
+        self.pass_ = input_pass(f'Enter the password for [{self.user_}]\n >>> ')
+        self.nmbr_ = int(input('Please enter the experiment number (integer)\n >>> '))
+
+# Constants used in development tests only
+HTTP_RESPONSE_DUMPER = '/tmp/http_dumper.html'
+
 # ------------------------- APPLICATION LAUNCH ------------------------- #
+
+# Development testing
+# Should be commented out by final release to the public
+dev = DevelopmentTest()
+dev.launch_experiment_wrapper()
 
 # Initializing the GUI
 app_gui = MainGUI()
