@@ -43,6 +43,10 @@
 #   -> https://www.geeksforgeeks.org/create-temporary-files-and-directories-using-python-tempfile/
 # 14. Python path separator [duplicate]
 #   -> https://stackoverflow.com/a/50738724
+#
+# (On 2023-04-04)
+# 15. Xpath cheatsheet
+#   -> https://devhints.io/xpath
 
 # [2] CODING CONVENTIONS:
 # 1. Use single quote (') instead of double quotes (") when specifying strings
@@ -50,13 +54,13 @@
 # 3. 'SipesatScr...' class name prefix indicates a class of the superclass 'tk.Frame'
 
 # [3] VARIABLE CONVENTIONS:
-# 1. 'Kategori' (category)
+# 1. (harvest_category) 'Kategori'
 #  -> ['r'] = The Risat Research menu category
 #  -> ['c'] = The Risat ComService menu category
-# 2. 'Jenis Data' (datatype) radio button in the harvester menu has the following possible IntVar values:
+# 2. (harvest_datatype) 'Jenis Data' radio button in the harvester menu has the following possible IntVar values:
 #  -> [0] = Data Ringkasan
 #  -> [1] = Data Detil Lengkap
-# 3. 'Data Hasil Panenan' (output) radio button in the harvester menu has the following possible StringVar values:
+# 3. (harvest_output) 'Data Hasil Panenan' radio button in the harvester menu has the following possible StringVar values:
 #  -> ['dana'] = Risat Dana Penelitian/AbdiMas
 #  -> ['arsip'] = Risat Arsip Penelitian/AbdiMas
 #  -> ['lapakhir'] = = Risat Laporan Akhir Penelitian/AbdiMas
@@ -95,19 +99,45 @@
 # }
 
 # [6] REFERENCES TO FILES INSIDE THE AUTHOR'S PERSONAL COMPUTER
-# 1. The harvester script that gets past the Risat login page
+#  1. The harvester script that gets past the Risat login page
 #   -> /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
+
+# [7] BACKENDHARVESTER RUN FUNCTIONS CONVETIONS
+# Under the class BackEndHarvester, there are functions which look like
+# the following:
+# - run_harvest_r_0_dana()
+# - run_harvest_r_1_data()
+# - run_harvest_c_0_arsip()
+# - run_harvest_c_0_lapakhir()
+# - etc.
+#
+# These functions represent the radiobutton selection in the classes
+# SipesatScrResearch and SipesatScrComService.
+# The codes 'r', 'c', '0', 'dana', etc. are representatives of variable
+# convetions as found in convention [3]
+#
+# Please refer to convention [3] for navigating in
+# these BackEndHarvester functions
+
+# [8] IMPORTANT TRICKS
+#  1. Avoiding Tkinter freezing
+#   -> Add the following code block
+#   -> every time an element is changed:
+#      self.update()  # --- avoids freezing
 
 # --------------------------- CODE PREAMBLE --------------------------- #
 
 # Modules import
+from datetime import datetime as dt
 from lxml import html
 from os.path import sep
+from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import scrolledtext
 from tkinter import ttk
 from tkinter import IntVar
 from tkinter import StringVar
+import openpyxl as xl
 import requests as rq
 import tempfile as tmp
 import tkinter as tk
@@ -120,6 +150,9 @@ class MainGUI(tk.Tk):
     
     # The init function for the MainGUI class
     def __init__(self, *args, **kwargs):
+
+        # Preamble logging
+        print('[MainGUI] :: Starting the app ...')
         
         # Instantiating Tkinter instance
         tk.Tk.__init__(self, *args, **kwargs)
@@ -181,7 +214,7 @@ class SipesatScrLogin(tk.Frame):
     # The function that will be triggered when the 'LICENSE' button is pressed
     def on_license_button_click(self):
         license_title = 'LISENSI'
-        license_content = 'Program ini dilisensi menggunakan lisensi MIT\nKunjungi https://spdx.org/licenses/MIT.html untuk informasi lebih lanjut'
+        license_content = 'Copyright (c) 2023 groaking. All rights reserved.'
         messagebox.showinfo(license_title, license_content)
     
     # The function that will be triggered when the 'EXIT' button is pressed
@@ -200,6 +233,9 @@ class SipesatScrLogin(tk.Frame):
     
     # The function that will be triggered when the 'LOGIN' form button is pressed
     def on_submit_button_click(self, username, password):
+
+        # Avoiding Tkinter freezing
+        self.update()  # --- avoids freezing
         
         # Validating the input credentials
         validation = BackEndLoginChecker()
@@ -439,6 +475,8 @@ class SipesatScrResearch(tk.Frame):
         datatype_detailed_radio = ttk.Radiobutton(layout_frame_1, text=datatype_detailed_text,
             value=1, variable=self.radio_data_type)
         datatype_detailed_radio.grid(row=1, column=1, padx=2, pady=2, sticky='w')
+        # Setting default radiobutton value
+        self.radio_data_type.set(0)
         
         # :::
         # Layout [2]: Harvested data output
@@ -463,6 +501,8 @@ class SipesatScrResearch(tk.Frame):
         harvesttype_lapakhir_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_lapakhir_text,
             value='lapakhir', variable=self.radio_harvest_type)
         harvesttype_lapakhir_radio.grid(row=3, column=0, padx=2, pady=2, sticky='w')
+        # Setting default radiobutton value
+        self.radio_harvest_type.set('dana')
         
         # :::
         # Layout [3]: The action buttons
@@ -547,6 +587,8 @@ class SipesatScrComService(tk.Frame):
         datatype_detailed_radio = ttk.Radiobutton(layout_frame_1, text=datatype_detailed_text,
             value=1, variable=self.radio_data_type)
         datatype_detailed_radio.grid(row=1, column=1, padx=2, pady=2, sticky='w')
+        # Setting default radiobutton value
+        self.radio_data_type.set(0)
         
         # :::
         # Layout [2]: Harvested data output
@@ -571,6 +613,8 @@ class SipesatScrComService(tk.Frame):
         harvesttype_lapakhir_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_lapakhir_text,
             value='lapakhir', variable=self.radio_harvest_type)
         harvesttype_lapakhir_radio.grid(row=3, column=0, padx=2, pady=2, sticky='w')
+        # Setting default radiobutton value
+        self.radio_harvest_type.set('dana')
         
         # :::
         # Layout [3]: The action buttons
@@ -601,8 +645,13 @@ class SipesatScrHarvest(tk.Frame):
         elif self.controller.harvest_category == 'r':
             self.controller.raise_frame(SipesatScrResearch)
     
-    # The function that will be triggered when the 'cancel' button is selected/clicked
-    def on_start_button_click(self):    
+    # The function that will be triggered when the 'start' button is selected/clicked
+    def on_start_button_click(self):
+        # Changes the helper display
+        self.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        # Disables the cancel button
+        self.cancel_button.config(state='disabled')
+        self.update()  # --- avoids freezing
         # Calling the back-end harvester class
         harvester = BackEndHarvester()
         # Begin the harvesting process
@@ -616,6 +665,46 @@ class SipesatScrHarvest(tk.Frame):
             self.controller.harvest_output
         )
 
+    # The function that will be triggered when the 'start' button,
+    # which has been replaced with 'finish' button, is selected/clicked
+    def on_finish_button_click(self):
+        print('[SipesatScrHarvest] :: Finished the harvesting operation!')
+        if self.controller.harvest_category == 'c':
+            self.controller.raise_frame(SipesatScrComService)
+        elif self.controller.harvest_category == 'r':
+            self.controller.raise_frame(SipesatScrResearch)
+        # Enables the cancel button
+        self.cancel_button.config(state='normal')
+        self.update()  # --- avoids freezing
+        # Resets the helper text, message area, and the progress bar value
+        self.set_progress_bar(0)
+        self.clear_message_area()
+        self.set_help_label('Tekan tombol "MULAI PANEN" untuk memulai proses pemanenan data Risat')
+        self.update()  # --- avoids freezing
+        # Reset the 'start' button
+        start_text = 'MULAI PANEN'
+        self.start_button.config(text=start_text, command=lambda: self.on_start_button_click())
+        self.update()  # --- avoids freezing
+        # Reset the header text
+        desc_text = 'Jendela Pemanenan Data Risat'
+        self.set_header_desc(desc_text)
+
+    # The function that will be called by functions of
+    # class member BackEndHarvester upon successful scraping
+    def on_notify_successful_scraping(self):
+        # Replace 'start' button with 'finish' button
+        finish_text = 'SELESAI'
+        self.start_button.config(text=finish_text, command=lambda: self.on_finish_button_click())
+        self.update()  # --- avoids freezing
+
+        # Change the helper status display
+        self.set_help_label('Data selesai dipanen!')
+
+        # Showing info window
+        harvest_success_title = 'PEMANENAN DATA SELESAI'
+        harvest_success_content = f'Data telah selesai dipanen dan disimpan!'
+        messagebox.showinfo(harvest_success_title, harvest_success_content)
+
     # The function that changes the header description of this screen
     def set_header_desc(self, string):
         self.header_desc.config(text=string)
@@ -626,6 +715,9 @@ class SipesatScrHarvest(tk.Frame):
 
     # The function that changes the progress label of this screen
     # i.e., changes the percentage display of the progress bar
+    #
+    # This function should not be run directly
+    # Only access through 'set_progress_bar()' function
     def set_progress_label(self, string):
         self.progress_label.config(text=string)
 
@@ -641,6 +733,11 @@ class SipesatScrHarvest(tk.Frame):
         # Begin setting the progress bar's progression value
         self.progress_bar['value'] = value
 
+        # Setting the progress label value
+        value_string = f'Status: {str(value)}%'
+        self.set_progress_label(value_string)
+        self.update()  # --- avoids freezing
+
     # The function that clears this screen's message area's harvest logging output
     def clear_message_area(self):
         self.message_area.delete(1.0, tk.END)
@@ -655,7 +752,7 @@ class SipesatScrHarvest(tk.Frame):
     # harvest logging output
     # New line character is concatenated in between the existing message area's
     # content and the string to be appended, by default
-    def append_message_area(self, long_string, new_line=True):
+    def append_message_area(self, long_string, new_line=False):
         # Getting the current content of the message area
         str_ = self.message_area.get('1.0', tk.END)
         # Concat with a new line character,
@@ -666,6 +763,7 @@ class SipesatScrHarvest(tk.Frame):
         # and then applying to the message area GUI element
         str_ += long_string
         self.set_message_area(str_)
+        self.update()  # --- avoids freezing
     
     # The __init__ function
     def __init__(self, parent, controller):
@@ -693,12 +791,12 @@ class SipesatScrHarvest(tk.Frame):
         header_title.grid(row=0, column=0, padx=10, pady=2)
         
         # The header description displaying additional information about the screen
-        desc_text = 'Panen Data "[...placeholder...]"'
+        desc_text = 'Jendela Pemanenan Data Risat'
         self.header_desc = ttk.Label(self, text=desc_text, font=FONT_HEADER_DESC)
         self.header_desc.grid(row=1, column=0, padx=10, pady=5)
         
         # The screen's display help
-        help_text = 'Data "[...placeholder...]" sedang dipanen. Silahkan menunggu...'
+        help_text = 'Tekan tombol "MULAI PANEN" untuk memulai proses pemanenan data Risat'
         self.help_label = ttk.Label(self, text=help_text, font=FONT_REGULAR, anchor='w', justify='left')
         self.help_label.grid(row=2, column=0, padx=10, pady=10)
         
@@ -707,12 +805,12 @@ class SipesatScrHarvest(tk.Frame):
         progress_frame = tk.Frame(self)
         progress_frame.grid(row=3, column=0, padx=10, pady=10)
         # The progress status/value display
-        progress_text = 'Status: 67%'
+        progress_text = 'Status: 0%'
         self.progress_label = ttk.Label(progress_frame, text=progress_text, font=FONT_PROGRESS_VALUE, anchor='center', justify='center')
         self.progress_label.grid(row=0, column=0, padx=2, pady=5)
         # The progress bar
         self.progress_bar = ttk.Progressbar(progress_frame, length=600)
-        self.progress_bar['value'] = 20
+        self.progress_bar['value'] = 0
         self.progress_bar.grid(row=1, column=0, padx=2, pady=2, sticky='we')
         
         # The log message displayer
@@ -729,20 +827,20 @@ class SipesatScrHarvest(tk.Frame):
         #   in an efficient manner
         # - Upon release, this button should be disabled
         cancel_text = 'BATALKAN'
-        cancel_button = ttk.Button(layout_actions, text=cancel_text, width=30,
+        self.cancel_button = ttk.Button(layout_actions, text=cancel_text, width=30,
             command=lambda: self.on_cancel_button_click())
-        cancel_button.grid(row=0, column=0, padx=2, pady=2)
+        self.cancel_button.grid(row=0, column=0, padx=2, pady=2)
         # Setting the 'disabled' state of the button
         # Possible values: 'normal' and 'disabled'
-        cancel_button['state'] = 'normal'
+        self.cancel_button['state'] = 'normal'
         
         # The 'start' button trigger
         # Clicking this button proceeds the program to begin the harvesting process
         start_text = 'MULAI PANEN'
-        start_button = ttk.Button(layout_actions, text=start_text, width=40,
+        self.start_button = ttk.Button(layout_actions, text=start_text, width=40,
             command=lambda: self.on_start_button_click())
-        start_button.grid(row=0, column=1, padx=2, pady=2)
-    
+        self.start_button.grid(row=0, column=1, padx=2, pady=2)
+
 # - The class that checks whether the input username/password credentials in
 #   'SipesatScrLogin' screen are correct
 class BackEndLoginChecker():
@@ -822,7 +920,7 @@ class BackEndHarvester():
 
         # Preparing the temporary folder that will be used
         # in the recursive scraper of the detail pages
-        self.tmpdir = tmp.mkdtemp(prefix=SCRAPE_TEMP_DIR_PREFIX) + '/'
+        self.tmpdir = tmp.mkdtemp(prefix=SCRAPE_TEMP_DIR_PREFIX)
     
     # The harvest executor
     # Specify the username and password credentials to mitigate session timeout
@@ -838,6 +936,9 @@ class BackEndHarvester():
         # :::
         # Determining the cases of the harvesting arguments passed
         # This switching-cases require Python version >= v3.10
+
+        # Preamble logging
+        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
         
         # --------------------- RISAT PENELITIAN --------------------- #
         if category == 'r': # --- category selected: 'Risat Penelitian'
@@ -848,13 +949,10 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'dana':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
-                        pass
+                        self.run_harvest_r_0_dana(control, username, password)
                     case 'lapakhir':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                         
             elif datatype == 1: # --- 'data detil lengkap'
@@ -862,13 +960,10 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'dana':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'lapakhir':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
         
         # ---------------- RISAT PENGABDIAN MASYARAKAT ---------------- #
@@ -880,13 +975,10 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'dana':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'lapakhir':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                         
             elif datatype == 1: # --- 'data detil lengkap'
@@ -894,21 +986,21 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'dana':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
                     case 'lapakhir':
-                        print(f'[BackEndHarvester] :: SELECTED_CASE: category={category}, datatype={datatype}, output={output}')
                         pass
         
         # ======================== END ======================== #
 
     # This function recursively obtains the detail pages of Risat
     # For example, the 'Dana Penelitian Detil' and 'Abdimas Arsip Detil'
+    #
     # Requires no 'data_prompt' passed as argument,
     # but 'mode' argument is mandated to be passed
+    # Also requires 'username' and 'password' credentials to be
+    # passed as arguments
     #
     # Returns an array which elements are the paths to the
     # temporary files where each detail pages are stored into
@@ -918,7 +1010,7 @@ class BackEndHarvester():
     # mode='arsip_penelitian'        --> obtains the detail pages of 'Risat Arsip Penelitian'
     # mode='dana_pengabdian'        --> obtains the detail pages of 'Risat Dana Pengabdian'
     # mode='arsip_pengabdian'        --> obtains the detail pages of 'Risat Arsip Pengabdian'
-    def get_auto_risat_detil(self, mode):
+    def get_auto_risat_detil(self, mode, username, password):
 
         # :::
         # Determining the mode of the risat detil pages to be scraped recursively
@@ -927,7 +1019,7 @@ class BackEndHarvester():
         if mode == 'dana_penelitian':  # --- category selected: 'Dana Penelitian'
 
             # Preparing the 'data_prompt' arrays
-            data_prompt = self.get_risat_login()
+            data_prompt = self.get_risat_login(username, password)
             data_prompt = self.get_risat_penelitian(data_prompt)
             data_prompt = self.get_risat_penelitian_dana_penelitian(data_prompt)
             
@@ -977,12 +1069,13 @@ class BackEndHarvester():
 
                 # Writing to the temporary file in the temporary directory
                 tmppath = self.tmpdir + sep + 'dana_penelitian-detil-' + str(i) + '.html'
+                print(f'+ Saving to temporary path: {tmppath}.')
                 fo = open(tmppath, 'w')
                 fo.write(response)
                 fo.close()
 
                 # Appending to the array
-                scrape_array.insert(i, response)
+                scrape_array.insert(i, tmppath)
                 
                 # Logging: printing the basic information
                 judul = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace(
@@ -1643,6 +1736,182 @@ class BackEndHarvester():
         # Returning the http response string
         return data_prompt
 
+    # This function harvests "Risat Dana Penelitian > Ringkasan Data" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    def run_harvest_r_0_dana(self, control, username, password):
+        # SipesatScrHarvest messenger
+        control.set_header_desc('Panen Data "Risat Penelitian > Ringkasan Data"')
+        control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        control.set_progress_bar(0)
+        control.clear_message_area()
+
+        # Preamble logging
+        control.append_message_area(f'+ Memulai pemanenan data ...')
+        control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_penelitian(data_prompt)
+        data_prompt = self.get_risat_penelitian_dana_penelitian(data_prompt)
+
+        # Parsing XML tree content
+        control.append_message_area(f'+ Membaca halaman web ...')
+        control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Dana Penelitian Ringkasan'
+
+        # Preparing the sheet header
+        control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        control.set_progress_bar(25)
+        sheet['A1'].value = 'No.'
+        sheet['B1'].value = 'Judul'
+        sheet['C1'].value = 'Ketua'
+        sheet['D1'].value = 'Jml. Anggota'
+        sheet['E1'].value = 'Tgl. Usulan'
+        sheet['F1'].value = 'Bidang Fokus'
+        sheet['G1'].value = 'Rencana Biaya'
+        sheet['H1'].value = 'Lama Kegiatan'
+        sheet['I1'].value = 'Dana Disetujui'
+        sheet['J1'].value = 'Tgl. Persetujuan'
+        sheet['K1'].value = 'Dana Ditransfer'
+        sheet['L1'].value = 'Tgl. Ditransfer'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@class="mw-100"]//div[@class="form-group f12"]/table[@width="100%"]//tr[@valign="top"]'
+
+        # ---
+        # Obtaining the data row values
+        control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        control.set_progress_bar(30)
+
+        # HYPOTHESIS:
+        # Xpath cannot detect 'tbody' element.
+        # So instead of using 'table/tbody/tr', use 'table//tr' instead
+        #
+        # RESULT:
+        # The hypothesis is correct.
+        # Therefore, don't mention 'tbody' in any of the following Xpath paths
+
+        a1 = [str(i)
+              for i in range(1, len(content.xpath(base))+1)]
+
+        b1 = [l.strip()
+              for l in content.xpath(base + '//span[@class="hijau"]/text()')]
+
+        c1 = [l.replace('Ketua:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[2]/td/table//tr/td[1]/text()')]
+
+        d1 = [l.replace('Jumlah Anggota:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[2]/td/table//tr/td[3]/text()')]
+
+        e1 = [l.replace('Tgl Usulan:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[3]/td[1]/text()')]
+
+        f1 = [l.replace('Bidang Fokus:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[4]/td[1]/text()')]
+
+        g1 = [l.replace('Rencana Biaya:', '').replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[5]/td[1]/text()')]
+
+        h1 = [l.replace('Lama Kegiatan:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[6]/td[1]/text()[1]')]
+
+        i1 = [l.replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[3]/text()')]
+
+        j1 = [l.strip()
+              for l in content.xpath(base + '/td[4]/text()')]
+
+        k1 = [l.replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[5]/text()')]
+
+        l1 = [l.replace('Terealisasi', '').strip()
+              for l in content.xpath(base + '/td[6]/text()')]
+
+        # The starting row coordinate of the active sheet
+        row_start = 2
+
+        # DEBUG:
+        print(a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1)
+        print()
+        print('SPESIFIK "C1" sepanjang ', len(c1), c1)
+        print()
+        print('Panjangajgnang', len(b1))
+        print(content.xpath(base))
+
+        # Iterating through each table row and write to the table
+        # Assumes the lists a1, b1, c1, ... have the same array size
+        control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        control.set_progress_bar(35)
+        for i in range(len(a1)):
+
+            # Noisy preamble logging
+            control.append_message_area(f'ITERASI [{i}]')
+            control.set_progress_bar(35 + round(45*(i+1)/(len(a1))))
+
+            # Painting the scraped data to the output spreadsheet row
+            sheet[f'A{row_start}'] = a1[i]
+            sheet[f'B{row_start}'] = b1[i]
+            sheet[f'C{row_start}'] = c1[i]
+            sheet[f'D{row_start}'] = d1[i]
+            sheet[f'E{row_start}'] = e1[i]
+            sheet[f'F{row_start}'] = f1[i]
+            sheet[f'G{row_start}'] = g1[i]
+            sheet[f'H{row_start}'] = h1[i]
+            sheet[f'I{row_start}'] = i1[i]
+            sheet[f'J{row_start}'] = j1[i]
+            sheet[f'K{row_start}'] = k1[i]
+            sheet[f'L{row_start}'] = l1[i]
+
+            # Incrementing the 'row_start' iterator
+            # Then continue the loop
+            row_start += 1
+            continue
+
+        # Post-loop logging: successfully painted the output spreadsheet file
+        control.append_message_area(f'+ Tabel sukses dipanen!')
+        control.set_progress_bar(85)
+
+        # Asking for the spreadsheet name to save as
+        control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
+        control.set_progress_bar(90)
+        output_spreadsheet = filedialog.asksaveasfilename(
+            filetypes=[('Excel files', '*.xlsx')],
+            initialfile='Sipesat - Dana Penelitian Ringkasan Risat.xlsx',
+            title='Simpan sebagai ...'
+        )
+        if output_spreadsheet[-5:] != '.xlsx':
+            output_spreadsheet = output_spreadsheet + '.xlsx'
+
+        # Saving the spreadsheet
+        control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+        control.set_progress_bar(95)
+        workbook.save(output_spreadsheet)
+
+        # Closing the openpyxl workbook
+        control.append_message_area(f'+ Menutup file spreadsheet ...')
+        control.set_progress_bar(98)
+        workbook.close()
+
+        # Notify for a successful scraping
+        control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
+        control.set_progress_bar(100)
+        control.on_notify_successful_scraping()
+
 # -------------------------- CONSTANT PRESETS -------------------------- #
 
 # 'FRAME_CLASSES' is a tuple that defines all the frame classes of the file
@@ -1787,7 +2056,7 @@ class DevelopmentTest():
         backend = BackEndHarvester()
 
         # Opening the 'Pengabdian Arsip' page
-        data_prompt = backend.get_risat_login(self.user_, self.pass_)
+        data_prompt = backend.get_risat_login()
         data_prompt = backend.get_risat_pengabdian(data_prompt)
         data_prompt = backend.get_risat_pengabdian_arsip(data_prompt)
 
@@ -1816,7 +2085,7 @@ class DevelopmentTest():
         backend = BackEndHarvester()
 
         # Getting the array of files of the scraped detail pages
-        array_of_files = backend.get_auto_risat_detil('dana_penelitian')
+        array_of_files = backend.get_auto_risat_detil('dana_penelitian', self.user_, self.pass_)
 
         # Printing the array
         print('+ Printing the array ...')
@@ -1864,9 +2133,10 @@ HTTP_RESPONSE_DUMPER = '/tmp/http_dumper.html'
 # ------------------------- APPLICATION LAUNCH ------------------------- #
 
 # Development testing
+# Not required for end-user usages
 # Should be commented out by final release to the public
-dev = DevelopmentTest()
-dev.launch_experiment_wrapper()
+# dev = DevelopmentTest()
+# dev.launch_experiment_wrapper()
 
 # Initializing the GUI
 app_gui = MainGUI()
