@@ -47,6 +47,14 @@
 # (On 2023-04-04)
 # 15. Xpath cheatsheet
 #   -> https://devhints.io/xpath
+# 16. Python Tkinter - How to set the default value of a radiobutton?
+#   -> https://stackoverflow.com/a/51544948
+# 17. Limiting python filedialog to a specific filetype
+#   -> https://stackoverflow.com/a/46339932
+# 18. How to place a default file name in the file dialog asksaveasfile python
+#   -> https://stackoverflow.com/a/67092469
+# 19. How to easily avoid Tkinter freezing?
+#   -> https://stackoverflow.com/a/67489469
 
 # [2] CODING CONVENTIONS:
 # 1. Use single quote (') instead of double quotes (") when specifying strings
