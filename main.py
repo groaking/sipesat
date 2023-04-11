@@ -55,6 +55,18 @@
 #   -> https://stackoverflow.com/a/67092469
 # 19. How to easily avoid Tkinter freezing?
 #   -> https://stackoverflow.com/a/67489469
+#
+# (On 2023-04-11)
+# 20. Openpyxl: How to merge cells using variable rows
+#   -> https://stackoverflow.com/a/56278226
+# 21. Python Program to Merge Excel Cells using openpyxl
+#   -> https://www.codespeedy.com/python-program-to-merge-excel-cell/
+# 22. XPATH: exclude elements which which has a specific child
+#   -> https://stackoverflow.com/questions/44943638
+# 23. XPath Select Nodes where all parent nodes do not contain specific attribute and value
+#   -> https://stackoverflow.com/questions/17191971
+# 24. Python: Using xpath locally / on a specific element
+#   -> https://stackoverflow.com/a/4785929
 
 # [2] CODING CONVENTIONS:
 # 1. Use single quote (') instead of double quotes (") when specifying strings
@@ -132,12 +144,17 @@
 #   -> Add the following code block
 #   -> every time an element is changed:
 #      self.update()  # --- avoids freezing
+#  2. Manipulation of cell values
+#   -> The two are equivalent:
+#      sheet['A1'] = 'Boo!'
+#      sheet.cell(row=1, column=1).value = 'Boo!'
 
 # --------------------------- CODE PREAMBLE --------------------------- #
 
 # Modules import
 from datetime import datetime as dt
 from lxml import html
+from openpyxl.styles import Alignment
 from os.path import sep
 from tkinter import filedialog
 from tkinter import messagebox
@@ -771,7 +788,6 @@ class SipesatScrHarvest(tk.Frame):
         # and then applying to the message area GUI element
         str_ += long_string
         self.set_message_area(str_)
-        self.update()  # --- avoids freezing
     
     # The __init__ function
     def __init__(self, parent, controller):
@@ -957,7 +973,7 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        pass
+                        self.run_harvest_r_0_arsip(control, username, password)
                     case 'dana':
                         self.run_harvest_r_0_dana(control, username, password)
                     case 'lapakhir':
@@ -972,7 +988,7 @@ class BackEndHarvester():
                     case 'dana':
                         pass
                     case 'lapakhir':
-                        pass
+                        self.run_harvest_r_1_lapakhir(control, username, password)
         
         # ---------------- RISAT PENGABDIAN MASYARAKAT ---------------- #
         elif category == 'c': # --- category selected: 'Pengabdian Masyarakat'
@@ -985,7 +1001,7 @@ class BackEndHarvester():
                     case 'arsip':
                         pass
                     case 'dana':
-                        pass
+                        self.run_harvest_c_0_dana(control, username, password)
                     case 'lapakhir':
                         pass
                         
@@ -1753,7 +1769,7 @@ class BackEndHarvester():
     # - username, password  --> the Risat administrator username and password
     def run_harvest_r_0_dana(self, control, username, password):
         # SipesatScrHarvest messenger
-        control.set_header_desc('Panen Data "Risat Penelitian > Ringkasan Data"')
+        control.set_header_desc('Panen Data "Risat Dana Penelitian > Ringkasan Data"')
         control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
         control.set_progress_bar(0)
         control.clear_message_area()
@@ -1853,13 +1869,10 @@ class BackEndHarvester():
         # The starting row coordinate of the active sheet
         row_start = 2
 
-        # DEBUG:
-        print(a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1)
-        print()
-        print('SPESIFIK "C1" sepanjang ', len(c1), c1)
-        print()
-        print('Panjangajgnang', len(b1))
-        print(content.xpath(base))
+        # DEBUG
+        # Please comment out after use
+        # ---
+        # print(a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1)
 
         # Iterating through each table row and write to the table
         # Assumes the lists a1, b1, c1, ... have the same array size
@@ -1868,8 +1881,715 @@ class BackEndHarvester():
         for i in range(len(a1)):
 
             # Noisy preamble logging
-            control.append_message_area(f'ITERASI [{i}]')
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
             control.set_progress_bar(35 + round(45*(i+1)/(len(a1))))
+
+            # Painting the scraped data to the output spreadsheet row
+            sheet[f'A{row_start}'] = a1[i]
+            sheet[f'B{row_start}'] = b1[i]
+            sheet[f'C{row_start}'] = c1[i]
+            sheet[f'D{row_start}'] = d1[i]
+            sheet[f'E{row_start}'] = e1[i]
+            sheet[f'F{row_start}'] = f1[i]
+            sheet[f'G{row_start}'] = g1[i]
+            sheet[f'H{row_start}'] = h1[i]
+            sheet[f'I{row_start}'] = i1[i]
+            sheet[f'J{row_start}'] = j1[i]
+            sheet[f'K{row_start}'] = k1[i]
+            sheet[f'L{row_start}'] = l1[i]
+
+            # Incrementing the 'row_start' iterator
+            # Then continue the loop
+            row_start += 1
+            continue
+        
+        # Post-loop logging: successfully painted the output spreadsheet file
+        control.append_message_area(f'+ Tabel sukses dipanen!')
+        control.set_progress_bar(85)
+
+        # Asking for the spreadsheet name to save as
+        # ---
+        # Logging and setting the progress bar
+        control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
+        control.set_progress_bar(90)
+        # Dealing with file name prompt and saving
+        # Using loop to mitigate the user clicking 'cancel'
+        # in the file name dialog prompt
+        while True:
+            # Opening the dialog prompt
+            output_spreadsheet = filedialog.asksaveasfilename(
+                filetypes=[('Excel files', '*.xlsx')],
+                initialfile='Sipesat - Dana Penelitian Ringkasan Risat.xlsx',
+                title='Simpan sebagai ...'
+            )
+            
+            # 'cancel' button in the dialog prompt is clicked
+            if len(output_spreadsheet) == 0:
+                # Showing confirmation
+                x = messagebox.askyesno(
+                    'Nama File Kosong',
+                    'Apakah Anda yakin ingin melanjutkan tanpa menyimpan file spreadsheet hasil pemanenan?'
+                )
+                # Determining whether to break or to continue the loop
+                # based on the inversed value of 'x'
+                if x:
+                    control.append_message_area(f'+ Finalisasi pemanenan data tanpa menyimpan file spreadsheet luaran ...')
+                    workbook.close()  # --- closing the workbook without closing
+                    break
+                else:
+                    continue  # --- continuing the loop
+            # File name does not end in spreadsheet extension
+            elif output_spreadsheet[-5:] != '.xlsx':
+                output_spreadsheet = output_spreadsheet + '.xlsx'
+            
+            # Saving the spreadsheet
+            control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+            control.set_progress_bar(95)
+            workbook.save(output_spreadsheet)
+    
+            # Closing the openpyxl workbook
+            control.append_message_area(f'+ Menutup file spreadsheet ...')
+            control.set_progress_bar(98)
+            workbook.close()
+
+            # Breaking the loop
+            break
+
+        # Notify for a successful scraping
+        control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
+        control.set_progress_bar(100)
+        control.on_notify_successful_scraping()
+
+    # This function harvests "Risat Arsip Penelitian > Ringkasan Data" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    def run_harvest_r_0_arsip(self, control, username, password):
+        # SipesatScrHarvest messenger
+        control.set_header_desc('Panen Data "Risat Arsip Penelitian > Ringkasan Data"')
+        control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        control.set_progress_bar(0)
+        control.clear_message_area()
+
+        # Preamble logging
+        control.append_message_area(f'+ Memulai pemanenan data ...')
+        control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_penelitian(data_prompt)
+        data_prompt = self.get_risat_penelitian_arsip(data_prompt)
+
+        # Parsing XML tree content
+        control.append_message_area(f'+ Membaca halaman web ...')
+        control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Arsip Penelitian Ringkasan'
+
+        # Preparing the sheet header
+        control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        control.set_progress_bar(25)
+        sheet['A1'].value = 'No.'
+        sheet['B1'].value = 'Judul'
+        sheet['C1'].value = 'Ketua'
+        sheet['D1'].value = 'Bidang Fokus'
+        sheet['E1'].value = 'Tgl. Usulan'
+        sheet['F1'].value = 'Lama Kegiatan'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@id="ContentPlaceHolder1_arsip1_updg1"]//div[@class="panel-body f12"]/table[@width="100%"]'
+
+        # ---
+        # Obtaining the data row values
+        control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        control.set_progress_bar(30)
+
+        # HYPOTHESIS:
+        # Xpath cannot detect 'tbody' element.
+        # So instead of using 'table/tbody/tr', use 'table//tr' instead
+        #
+        # RESULT:
+        # The hypothesis is correct.
+        # Therefore, don't mention 'tbody' in any of the following Xpath paths
+
+        a1 = [str(i)
+              for i in range(1, len(content.xpath(base)) + 1)]
+
+        b1 = [l.strip()
+              for l in content.xpath(base + '//tr[1][@valign="top"]/td[@colspan="4"]/b/text()')]
+
+        c1 = [l.replace('Ketua:', '').strip()
+              for l in content.xpath(base + '//tr[3][@valign="top"]/td[2]/table//tr[1]/td/text()')]
+
+        d1 = [l.replace('Bidang Fokus:', '').strip()
+              for l in content.xpath(base + '//tr[3][@valign="top"]/td[2]/table//tr[2]/td/text()')]
+
+        e1 = [l.replace('Tgl Usulan:', '').strip()
+              for l in content.xpath(base + '//tr[3][@valign="top"]/td[2]/table//tr[3]/td/text()')]
+
+        f1 = [l.replace('Lama Kegiatan:', '').strip()
+              for l in content.xpath(base + '//tr[3][@valign="top"]/td[2]/table//tr[4]/td/text()')]
+
+        # The starting row coordinate of the active sheet
+        row_start = 2
+
+        # DEBUG
+        # Please comment out after use
+        # ---
+        '''
+        print()
+        print('-------------------------------------------------------------------------------------------------------')
+        for a in (a1, b1, c1, d1, e1, f1):
+            print('LEN', len(a))
+            print('CONTENT', a)
+            print()
+        print('-------------------------------------------------------------------------------------------------------', end='')
+        print()
+        '''
+
+        # Iterating through each table row and write to the table
+        # Assumes the lists a1, b1, c1, ... have the same array size
+        control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        control.set_progress_bar(35)
+        for i in range(len(a1)):
+            # Noisy preamble logging
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
+            control.set_progress_bar(35 + round(45 * (i + 1) / (len(a1))))
+
+            # Painting the scraped data to the output spreadsheet row
+            sheet[f'A{row_start}'] = a1[i]
+            sheet[f'B{row_start}'] = b1[i]
+            sheet[f'C{row_start}'] = c1[i]
+            sheet[f'D{row_start}'] = d1[i]
+            sheet[f'E{row_start}'] = e1[i]
+            sheet[f'F{row_start}'] = f1[i]
+
+            # Incrementing the 'row_start' iterator
+            # Then continue the loop
+            row_start += 1
+            continue
+
+        # Post-loop logging: successfully painted the output spreadsheet file
+        control.append_message_area(f'+ Tabel sukses dipanen!')
+        control.set_progress_bar(85)
+
+        # Asking for the spreadsheet name to save as
+        # ---
+        # Logging and setting the progress bar
+        control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
+        control.set_progress_bar(90)
+        # Dealing with file name prompt and saving
+        # Using loop to mitigate the user clicking 'cancel'
+        # in the file name dialog prompt
+        while True:
+            # Opening the dialog prompt
+            output_spreadsheet = filedialog.asksaveasfilename(
+                filetypes=[('Excel files', '*.xlsx')],
+                initialfile='Sipesat - Arsip Penelitian Ringkasan Risat.xlsx',
+                title='Simpan sebagai ...'
+            )
+
+            # 'cancel' button in the dialog prompt is clicked
+            if len(output_spreadsheet) == 0:
+                # Showing confirmation
+                x = messagebox.askyesno(
+                    'Nama File Kosong',
+                    'Apakah Anda yakin ingin melanjutkan tanpa menyimpan file spreadsheet hasil pemanenan?'
+                )
+                # Determining whether to break or to continue the loop
+                # based on the inversed value of 'x'
+                if x:
+                    control.append_message_area(
+                        f'+ Finalisasi pemanenan data tanpa menyimpan file spreadsheet luaran ...')
+                    workbook.close()  # --- closing the workbook without closing
+                    break
+                else:
+                    continue  # --- continuing the loop
+            # File name does not end in spreadsheet extension
+            elif output_spreadsheet[-5:] != '.xlsx':
+                output_spreadsheet = output_spreadsheet + '.xlsx'
+
+            # Saving the spreadsheet
+            control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+            control.set_progress_bar(95)
+            workbook.save(output_spreadsheet)
+
+            # Closing the openpyxl workbook
+            control.append_message_area(f'+ Menutup file spreadsheet ...')
+            control.set_progress_bar(98)
+            workbook.close()
+
+            # Breaking the loop
+            break
+
+        # Notify for a successful scraping
+        control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
+        control.set_progress_bar(100)
+        control.on_notify_successful_scraping()
+
+    # This function harvests "Risat Laporan Akhir Penelitian > Data Detil Lengkap" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    def run_harvest_r_1_lapakhir(self, control, username, password):
+        # SipesatScrHarvest messenger
+        control.set_header_desc('Panen Data "Risat Laporan Akhir Penelitian > Data Detil Lengkap"')
+        control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        control.set_progress_bar(0)
+        control.clear_message_area()
+
+        # Preamble logging
+        control.append_message_area(f'+ Memulai pemanenan data ...')
+        control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_penelitian(data_prompt)
+        data_prompt = self.get_risat_penelitian_pelak_kegi(data_prompt)
+        data_prompt = self.get_risat_penelitian_pelak_kegi_lapakhir(data_prompt)
+
+        # Parsing XML tree content
+        control.append_message_area(f'+ Membaca halaman web ...')
+        control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Arsip Lap. Akhir Detil'
+
+        # Preparing the sheet header
+        control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        control.set_progress_bar(25)
+        # ---
+        # Preparing the "IDENTITY" header
+        sheet.merge_cells('A1:I1')
+        sheet['A1'].value = 'IDENTITAS'
+        sheet['A1'].alignment = Alignment(horizontal='center')
+        # Preparing the "IDENTITY" sub-headers
+        sheet['A2'].value = 'No.'
+        sheet['B2'].value = 'Judul'
+        sheet['C2'].value = 'Ketua'
+        sheet['D2'].value = 'Bidang Fokus'
+        sheet['E2'].value = 'Tgl. Usulan'
+        sheet['F2'].value = 'Jumlah Anggota'
+        sheet['G2'].value = 'Biaya'
+        sheet['H2'].value = 'Dana Disetujui'
+        sheet['I2'].value = 'Lama Kegiatan'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@id="ContentPlaceHolder1_lapakhirbp3m1_updg1"]//div[@class="panel-body f12"]/table[@width="100%"]'
+
+        # ---
+        # Obtaining the data row values
+        control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        control.set_progress_bar(30)
+
+        # HYPOTHESIS:
+        # Xpath cannot detect 'tbody' element.
+        # So instead of using 'table/tbody/tr', use 'table//tr' instead
+        #
+        # RESULT:
+        # The hypothesis is correct.
+        # Therefore, don't mention 'tbody' in any of the following Xpath paths
+
+        a2 = [str(i)
+              for i in range(1, len(content.xpath(base)) + 1)]
+
+        b2 = [l.strip()
+              for l in content.xpath(base + '//tr[@valign="top"]/td[@colspan="3"]/b/text()')]
+
+        c2 = [l.replace('Ketua:', '').strip()
+              for l in content.xpath(base + '//tr[2][not(descendant::table) and not(ancestor::table[@class="table"])]/td[2]/text()')]
+
+        d2 = [l.replace('Bidang Fokus:', '').strip()
+              for l in content.xpath(base + '//tr[3][not(descendant::table) and not(ancestor::table[@class="table"])]/td[@colspan="3"]/text()')]
+
+        e2 = [l.replace('Tgl Usulan:', '').strip()
+              for l in content.xpath(base + '//tr[4][not(descendant::table) and not(ancestor::table[@class="table"])]/td[@colspan="3"]/text()')]
+
+        f2 = [l.replace('Jml Anggota:', '').strip()
+              for l in content.xpath(base + '//tr[5][not(descendant::table) and not(ancestor::table[@class="table"])]/td[@colspan="3"]/text()')]
+
+        g2 = [l.replace('Biaya:', '').replace('Rp.', '').replace(',', '').split('disetujui')[0].strip()
+              for l in content.xpath(base + '//tr[6][not(descendant::table) and not(ancestor::table[@class="table"])]/td[@colspan="3"]/text()')]
+
+        h2 = [l.replace('Biaya:', '').replace('Rp.', '').replace(',', '').split('disetujui')[1].strip()
+              for l in content.xpath(base + '//tr[6][not(descendant::table) and not(ancestor::table[@class="table"])]/td[@colspan="3"]/text()')]
+
+        i2 = [l.replace('Lama Kegiatan:', '').strip()
+              for l in content.xpath(base + '//tr[7][not(descendant::table) and not(ancestor::table[@class="table"])]/td[@colspan="3"]/text()')]
+
+        # The table which displays 'Luaran Laporan Akhir'
+        # Treated differently, specially
+        # 'j_' is a DOM element representing a HTML table
+        j_ = content.xpath(base + '//tr[9]/td[@colspan="3"]/table[@class="table"]')
+
+        # The starting row coordinate of the active sheet
+        row_start = 3
+
+        # DEBUG
+        # Please comment out after use
+        # ---
+        print()
+        print('-------------------------------------------------------------------------------------------------------')
+        for a in (a2, b2, c2, d2, e2, f2, g2, h2, i2, j_):
+            print('LEN', len(a))
+            print('CONTENT', a)
+            print()
+        print('-------------------------------------------------------------------------------------------------------', end='')
+        print()
+
+        # The maximum number of 'LUARAN' table data row
+        j_max_row = 0
+
+        # Iterating through each table row and write to the table
+        # Assumes the lists a1, b1, c1, ... have the same array size
+        control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        control.set_progress_bar(35)
+        for i in range(len(a2)):
+            # Noisy preamble logging
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
+            control.set_progress_bar(35 + round(45 * (i + 1) / (len(a2))))
+
+            # Painting the scraped data to the output spreadsheet row
+            # Section 1: 'IDENTITY'
+            sheet[f'A{row_start}'] = a2[i]
+            sheet[f'B{row_start}'] = b2[i]
+            sheet[f'C{row_start}'] = c2[i]
+            sheet[f'D{row_start}'] = d2[i]
+            sheet[f'E{row_start}'] = e2[i]
+            sheet[f'F{row_start}'] = f2[i]
+            sheet[f'G{row_start}'] = g2[i]
+            sheet[f'H{row_start}'] = h2[i]
+            sheet[f'I{row_start}'] = i2[i]
+
+            # Painting the scraped data to the output spreadsheet row
+            # Section 2: 'LUARAN'
+            # ---
+            # Checking if 'luaran' table data exists
+            data_luaran = j_[i].xpath('.//td')
+            if len(data_luaran) == 0:
+                pass  # --- nope. the data does not exist
+            else:
+
+                # Checking if this table's 'LUARAN' data has the most rows
+                j_all_rows = j_[i].xpath('.//tr[not(descendant::th)]')
+                j_max_row = max(j_max_row, len(j_all_rows))
+
+                # ROW DATA LABEL CONVENTION
+                # j_row_a -> "No. Luaran"
+                # j_row_b -> "Jenis Luaran"
+                # j_row_c -> "Status Luaran"
+                # j_row_d -> "File Laporan Akhir"
+                # j_row_e -> "Alamat URL"
+                # j_row_f -> "Status Akhir Luaran"
+                # j_row_g -> "File PTJ Keuangan"
+
+                j_row_a = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[1]/text()')]
+
+                j_row_b = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[2]/text()')]
+
+                j_row_c = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[3]/text()')]
+
+                j_row_d = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[4]/a/@href')]
+
+                j_row_e = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[5]/a/@href')]
+
+                j_row_f = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[6]/text()')]
+
+                j_row_g = [l.strip()
+                      for l in j_[i].xpath('.//tr[not(descendant::th)]/td[7]/a/@href')]
+
+                # The starting column coordinate for filling the 'LUARAN' table data
+                col_start = 10
+
+                # DEBUG
+                # Please comment out after use
+                # ---
+                print()
+                print(
+                    '-------------------------------------------------------------------------------------------------------')
+                for b in (j_row_a, j_row_b, j_row_c, j_row_d, j_row_e, j_row_f, j_row_g):
+                    print('LEN', len(b))
+                    print('CONTENT', b)
+                    print()
+                print(
+                    '-------------------------------------------------------------------------------------------------------',
+                    end='')
+                print()
+
+                # Iterating through each table row and write to the spreadsheet
+                # Assumes the lists j_row_a, j_row_b, ... have the same array size
+                for j in range(len(j_row_a)):
+
+                    # Painting table data
+                    sheet.cell(row=row_start, column=col_start).value = j_row_b[j]
+                    sheet.cell(row=row_start, column=col_start+1).value = j_row_c[j]
+                    sheet.cell(row=row_start, column=col_start+2).value = j_row_d[j]
+                    sheet.cell(row=row_start, column=col_start+3).value = j_row_e[j]
+                    sheet.cell(row=row_start, column=col_start+4).value = j_row_f[j]
+                    sheet.cell(row=row_start, column=col_start+5).value = j_row_g[j]
+
+                    # Incrementing the 'col_start' iterator before continuing the loop
+                    col_start += 6
+                    continue
+
+            # Incrementing the 'row_start' iterator
+            # Then continue the loop
+            row_start += 1
+            continue
+
+        # Post-loop logging: appending the header over the 'LUARAN' columns
+        control.append_message_area(f'+ Melengkapi kepala tabel pada bagian "LUARAN" ...')
+        # ---
+        # The starting column for the 'LUARAN' data
+        col_start = 10
+        # Beginning the loop that detects the maximum number of 'LUARAN' rows
+        # according to the variable 'j_max_row'
+        for i in range(1, j_max_row+1):
+            # Setting the top header
+            sheet.merge_cells(
+                start_row=1,
+                start_column=col_start,
+                end_row=1,
+                end_column=col_start+5
+            )
+            sheet.cell(row=1, column=col_start).value = f'LUARAN #{i}'
+            sheet.cell(row=1, column=col_start).alignment = Alignment(horizontal='center')
+            # Setting the sub headers
+            sheet.cell(row=2, column=col_start).value = 'Jenis Luaran'
+            sheet.cell(row=2, column=col_start+1).value = 'Status Luaran'
+            sheet.cell(row=2, column=col_start+2).value = 'File Lap. Akhir'
+            sheet.cell(row=2, column=col_start+3).value = 'Alamat URL'
+            sheet.cell(row=2, column=col_start+4).value = 'Status Akhir Luaran'
+            sheet.cell(row=2, column=col_start+5).value = 'File PTJ Keuangan'
+            # Incrementing the 'col_start' iterator before continuing the loop
+            col_start += 6
+            continue
+
+        # Post-loop logging: successfully painted the output spreadsheet file
+        control.append_message_area(f'+ Tabel sukses dipanen!')
+        control.set_progress_bar(85)
+
+        # Asking for the spreadsheet name to save as
+        # ---
+        # Logging and setting the progress bar
+        control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
+        control.set_progress_bar(90)
+        # Dealing with file name prompt and saving
+        # Using loop to mitigate the user clicking 'cancel'
+        # in the file name dialog prompt
+        while True:
+            # Opening the dialog prompt
+            output_spreadsheet = filedialog.asksaveasfilename(
+                filetypes=[('Excel files', '*.xlsx')],
+                initialfile='Sipesat - Lap Akhir Penelitian Detil Risat.xlsx',
+                title='Simpan sebagai ...'
+            )
+
+            # 'cancel' button in the dialog prompt is clicked
+            if len(output_spreadsheet) == 0:
+                # Showing confirmation
+                x = messagebox.askyesno(
+                    'Nama File Kosong',
+                    'Apakah Anda yakin ingin melanjutkan tanpa menyimpan file spreadsheet hasil pemanenan?'
+                )
+                # Determining whether to break or to continue the loop
+                # based on the inversed value of 'x'
+                if x:
+                    control.append_message_area(
+                        f'+ Finalisasi pemanenan data tanpa menyimpan file spreadsheet luaran ...')
+                    workbook.close()  # --- closing the workbook without closing
+                    break
+                else:
+                    continue  # --- continuing the loop
+            # File name does not end in spreadsheet extension
+            elif output_spreadsheet[-5:] != '.xlsx':
+                output_spreadsheet = output_spreadsheet + '.xlsx'
+
+            # Saving the spreadsheet
+            control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+            control.set_progress_bar(95)
+            workbook.save(output_spreadsheet)
+
+            # Closing the openpyxl workbook
+            control.append_message_area(f'+ Menutup file spreadsheet ...')
+            control.set_progress_bar(98)
+            workbook.close()
+
+            # Breaking the loop
+            break
+
+        # Notify for a successful scraping
+        control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
+        control.set_progress_bar(100)
+        control.on_notify_successful_scraping()
+
+    # This function harvests "Risat Dana Pengabdian Masyarakat > Ringkasan Data" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    def run_harvest_c_0_dana(self, control, username, password):
+        # SipesatScrHarvest messenger
+        control.set_header_desc('Panen Data "Risat Dana Pengabdian Masyarakat > Ringkasan Data"')
+        control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        control.set_progress_bar(0)
+        control.clear_message_area()
+
+        # Preamble logging
+        control.append_message_area(f'+ Memulai pemanenan data ...')
+        control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_pengabdian(data_prompt)
+        data_prompt = self.get_risat_pengabdian_dana_pengabdian(data_prompt)
+
+        # Parsing XML tree content
+        control.append_message_area(f'+ Membaca halaman web ...')
+        control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Dana Pengabdian Ringkasan'
+
+        # Preparing the sheet header
+        control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        control.set_progress_bar(25)
+        sheet['A1'].value = 'No.'
+        sheet['B1'].value = 'Judul'
+        sheet['C1'].value = 'Ketua'
+        sheet['D1'].value = 'Jml. Anggota'
+        sheet['E1'].value = 'Tgl. Usulan'
+        sheet['F1'].value = 'Bidang Fokus'
+        sheet['G1'].value = 'Rencana Biaya'
+        sheet['H1'].value = 'Lama Kegiatan'
+        sheet['I1'].value = 'Dana Disetujui'
+        sheet['J1'].value = 'Tgl. Persetujuan'
+        sheet['K1'].value = 'Dana Ditransfer'
+        sheet['L1'].value = 'Tgl. Ditransfer'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@class="mw-100"]//div[@class="form-group f12"]/table[@width="100%"]//tr[@valign="top"]'
+
+        # ---
+        # Obtaining the data row values
+        control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        control.set_progress_bar(30)
+
+        # HYPOTHESIS:
+        # Xpath cannot detect 'tbody' element.
+        # So instead of using 'table/tbody/tr', use 'table//tr' instead
+        #
+        # RESULT:
+        # The hypothesis is correct.
+        # Therefore, don't mention 'tbody' in any of the following Xpath paths
+
+        a1 = [str(i)
+              for i in range(1, len(content.xpath(base)) + 1)]
+
+        b1 = [l.strip()
+              for l in content.xpath(base + '//span[@class="hijau"]/text()')]
+
+        c1 = [l.replace('Ketua:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[2]/td/table//tr/td[1]/text()')]
+
+        d1 = [l.replace('Jumlah Anggota:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[2]/td/table//tr/td[3]/text()')]
+
+        e1 = [l.replace('Tgl Usulan:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[3]/td[1]/text()')]
+
+        f1 = [l.replace('Bidang Fokus:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[4]/td[1]/text()')]
+
+        g1 = [l.replace('Rencana Biaya:', '').replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[5]/td[1]/text()')]
+
+        h1 = [l.replace('Lama Kegiatan:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[6]/td[1]/text()[1]')]
+
+        i1 = [l.replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[3]/text()')]
+
+        j1 = [l.strip()
+              for l in content.xpath(base + '/td[4]/text()')]
+
+        k1 = [l.replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[5]/text()')]
+
+        l1 = [l.replace('Terealisasi', '').strip()
+              for l in content.xpath(base + '/td[6]/text()')]
+
+        # The starting row coordinate of the active sheet
+        row_start = 2
+
+        # DEBUG
+        # Please comment out after use
+        # ---
+        # print(a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1)
+
+        # Iterating through each table row and write to the table
+        # Assumes the lists a1, b1, c1, ... have the same array size
+        control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        control.set_progress_bar(35)
+        for i in range(len(a1)):
+            # Noisy preamble logging
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
+            control.set_progress_bar(35 + round(45 * (i + 1) / (len(a1))))
 
             # Painting the scraped data to the output spreadsheet row
             sheet[f'A{row_start}'] = a1[i]
@@ -1895,25 +2615,53 @@ class BackEndHarvester():
         control.set_progress_bar(85)
 
         # Asking for the spreadsheet name to save as
+        # ---
+        # Logging and setting the progress bar
         control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
         control.set_progress_bar(90)
-        output_spreadsheet = filedialog.asksaveasfilename(
-            filetypes=[('Excel files', '*.xlsx')],
-            initialfile='Sipesat - Dana Penelitian Ringkasan Risat.xlsx',
-            title='Simpan sebagai ...'
-        )
-        if output_spreadsheet[-5:] != '.xlsx':
-            output_spreadsheet = output_spreadsheet + '.xlsx'
+        # Dealing with file name prompt and saving
+        # Using loop to mitigate the user clicking 'cancel'
+        # in the file name dialog prompt
+        while True:
+            # Opening the dialog prompt
+            output_spreadsheet = filedialog.asksaveasfilename(
+                filetypes=[('Excel files', '*.xlsx')],
+                initialfile='Sipesat - Dana Pengabdian Masyarakat Ringkasan Risat.xlsx',
+                title='Simpan sebagai ...'
+            )
 
-        # Saving the spreadsheet
-        control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
-        control.set_progress_bar(95)
-        workbook.save(output_spreadsheet)
+            # 'cancel' button in the dialog prompt is clicked
+            if len(output_spreadsheet) == 0:
+                # Showing confirmation
+                x = messagebox.askyesno(
+                    'Nama File Kosong',
+                    'Apakah Anda yakin ingin melanjutkan tanpa menyimpan file spreadsheet hasil pemanenan?'
+                )
+                # Determining whether to break or to continue the loop
+                # based on the inversed value of 'x'
+                if x:
+                    control.append_message_area(
+                        f'+ Finalisasi pemanenan data tanpa menyimpan file spreadsheet luaran ...')
+                    workbook.close()  # --- closing the workbook without closing
+                    break
+                else:
+                    continue  # --- continuing the loop
+            # File name does not end in spreadsheet extension
+            elif output_spreadsheet[-5:] != '.xlsx':
+                output_spreadsheet = output_spreadsheet + '.xlsx'
 
-        # Closing the openpyxl workbook
-        control.append_message_area(f'+ Menutup file spreadsheet ...')
-        control.set_progress_bar(98)
-        workbook.close()
+            # Saving the spreadsheet
+            control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+            control.set_progress_bar(95)
+            workbook.save(output_spreadsheet)
+
+            # Closing the openpyxl workbook
+            control.append_message_area(f'+ Menutup file spreadsheet ...')
+            control.set_progress_bar(98)
+            workbook.close()
+
+            # Breaking the loop
+            break
 
         # Notify for a successful scraping
         control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
