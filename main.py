@@ -1034,7 +1034,15 @@ class BackEndHarvester():
     # mode='arsip_penelitian'        --> obtains the detail pages of 'Risat Arsip Penelitian'
     # mode='dana_pengabdian'        --> obtains the detail pages of 'Risat Dana Pengabdian'
     # mode='arsip_pengabdian'        --> obtains the detail pages of 'Risat Arsip Pengabdian'
+    #
+    # !!! THIS FUNCTION IS DEPRECATED !!!
+    # PyFoldDefault
     def get_auto_risat_detil(self, mode, username, password):
+        # PyFoldDefault
+
+        '''
+        This function is deprecated
+        '''
 
         # :::
         # Determining the mode of the risat detil pages to be scraped recursively
@@ -2348,6 +2356,245 @@ class BackEndHarvester():
         control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
         control.set_progress_bar(100)
         control.on_notify_successful_scraping()
+
+    # This function harvests "Risat Dana Penelitian > Ringkasan Detil" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    # DEBUG ONLY:
+    # (Please comment-out after debug)
+    def test_harvest_r_1_dana(self, username, password):
+    # UCAD > def test_harvest_r_1_dana(self, control, username, password):
+
+        '''
+        UCAD: Uncomment after debug
+        '''
+
+        # SipesatScrHarvest messenger
+        # UCAD > control.set_header_desc('Panen Data "Risat Dana Penelitian > Ringkasan Data"')
+        # UCAD > control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        # UCAD > control.set_progress_bar(0)
+        # UCAD > control.clear_message_area()
+
+        # Preamble logging
+        # UCAD > control.append_message_area(f'+ Memulai pemanenan data ...')
+        # UCAD > control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        # UCAD > control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        # UCAD > control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        # UCAD > control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_penelitian(data_prompt)
+        data_prompt = self.get_risat_penelitian_dana_penelitian(data_prompt)
+
+        # Parsing XML tree content
+        # UCAD > control.append_message_area(f'+ Membaca halaman web ...')
+        # UCAD > control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        # UCAD > control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        # UCAD > control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Dana Penelitian Detil'
+
+        # REMOVE THIS BLOCK AFTER CONVERSION FROM 'test_' to 'run_'
+        '''
+        Data yang perlu diambil:
+        1. Judul
+        2. Substansi usulan
+        3. Identitas pengusul - ketua
+        4. Identitas pengusul - anggota
+        5. RAB
+        6. Dokumen pendukung
+        
+        Urutan kolom excel:
+        1. Judul
+        2. Substansi usulan
+        3. RAB
+        4. Dokumen pendukung
+        5. Identitas pengusul - ketua
+        6. Identitas pengusul - anggota
+        '''
+
+        # Preparing the sheet header
+        # UCAD > control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        # UCAD > control.set_progress_bar(25)
+        # ---
+        # Preparing the "NOMOR" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=1,
+            end_row=2,
+            end_column=1
+        )
+        sheet['A1'].value = 'No.'
+        sheet['A1'].alignment = Alignment(horizontal='center')
+        # ---
+        # Preparing the "JUDUL" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=2,
+            end_row=1,
+            end_column=12
+        )
+        sheet['B1'].value = 'IDENTITAS'
+        sheet['B1'].alignment = Alignment(horizontal='center')
+        # Preparing the "JUDUL" sub-headers
+        sheet['B2'].value = 'Judul'
+        sheet['C2'].value = 'Tgl. Usulan'
+        sheet['D2'].value = 'TKT Saat Ini'
+        sheet['E2'].value = 'Level'
+        sheet['F2'].value = 'Kategori'
+        sheet['G2'].value = 'Skema'
+        sheet['H2'].value = 'Rumpun Ilmu'
+        sheet['I2'].value = 'Bidang Fokus'
+        sheet['J2'].value = 'Tema'
+        sheet['K2'].value = 'Topik'
+        sheet['L2'].value = 'Lama Kegiatan'
+        # ---
+        # Preparing the "SUBSTANSI USULAN" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=13,
+            end_row=1,
+            end_column=14
+        )
+        sheet['M1'].value = 'SUBSTANSI USULAN'
+        sheet['M1'].alignment = Alignment(horizontal='center')
+        # Preparing the "SUBSTANSI USULAN" sub-headers
+        sheet['M2'].value = 'Kelompok Makro'
+        sheet['N2'].value = 'File Proposal'
+        # ---
+        # Preparing the "RAB" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=15,
+            end_row=1,
+            end_column=16
+        )
+        sheet['O1'].value = 'RENCANA ANGGARAN BIAYA'
+        sheet['O1'].alignment = Alignment(horizontal='center')
+        # Preparing the "RAB" sub-headers
+        sheet['O2'].value = 'Biaya'
+        sheet['P2'].value = 'File RAB'
+        # ---
+        # Preparing the "DOKUMEN PENDUKUNG" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=17,
+            end_row=1,
+            end_column=19
+        )
+        sheet['Q1'].value = 'DOKUMEN PENDUKUNG'
+        sheet['Q1'].alignment = Alignment(horizontal='center')
+        # Preparing the "DOKUMEN PENDUKUNG" sub-headers
+        sheet['Q2'].value = 'Mitra'
+        sheet['R2'].value = 'Dukungan Biaya'
+        sheet['S2'].value = 'Surat Dukungan Mitra'
+        # ---
+        # Preparing the "IDENTITAS PENGUSUL — KETUA" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=20,
+            end_row=1,
+            end_column=24
+        )
+        sheet['T1'].value = 'IDENTITAS PENGUSUL — KETUA'
+        sheet['T1'].alignment = Alignment(horizontal='center')
+        # Preparing the "IDENTITAS PENGUSUL — KETUA" sub-headers
+        sheet['T2'].value = 'N.I.P'
+        sheet['U2'].value = 'N.I.K'
+        sheet['V2'].value = 'N.I.D.N'
+        sheet['W2'].value = 'Nama Lengkap'
+        sheet['X2'].value = 'Jabatan Fungsional'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@class="mw-100"]//div[@class="form-group f12"]/table[@width="100%"]//tr[@valign="top"]'
+
+        # ---
+        # Obtaining the data row values
+        # UCAD > control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        # UCAD > control.set_progress_bar(30)
+
+        # Reading the HTML entry row hidden ASPX values
+        # Copy-pasted from: /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
+        all_kodetran_prop = content.xpath(base + '//input[1][@type="hidden"]/@name')
+        all_kodetran_val = content.xpath(base + '//input[1][@type="hidden"]/@value')
+        all_stat_prop = content.xpath(base + '//input[2][@type="hidden"]/@name')
+        all_stat_val = content.xpath(base + '//input[2][@type="hidden"]/@value')
+        all_submitbtn = content.xpath(base + '//input[@type="submit"]/@name')
+
+        # The number of rows
+        # Assumes the 'all_' array size equals the number of data rows
+        number_of_row = len(all_kodetran_prop)
+
+        # Iterating through each entry row element
+        # Assumes all the 'all_' arrays in the previous code block
+        # are of the same length/size
+        # Copy-pasted from: /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
+        # UCAD > control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        # UCAD > control.set_progress_bar(35)
+        temporary_prompt = data_prompt
+        for i in range(number_of_row):
+            # Noisy preamble logging
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
+            # UCAD > control.set_progress_bar(35 + round(45 * (i + 1) / number_of_row))
+
+            # Preparing the AJAX payload
+            detail_prompt = {
+                'viewstate' : temporary_prompt['viewstate'],
+                'viewstategen' : temporary_prompt['viewstategen'],
+                'eventvalidation' : temporary_prompt['eventvalidation'],
+                'button_name' : all_submitbtn[i],
+                'kodetran_prop' : all_kodetran_prop[i],
+                'kodetran_val' : all_kodetran_val[i],
+                'stat_prop' : all_stat_prop[i],
+                'stat_val' : all_stat_val[i]
+            }
+
+            # Obtaining the response data of each individual entry row detail page
+            data = self.get_risat_penelitian_dana_penelitian_detil(detail_prompt)
+            content = data['html_content']
+            response = data['http_response']
+
+            # Getting the desired detail information
+            judul = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            nip = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[1]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            nama = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[4]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            list_anggota = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[4]//table[@class="table"]//tr[position()>1]/td[3]/text()')
+            jml_anggota = len(list_anggota)
+
+            # Logging
+            print()
+            print('=======================================================')
+            # Printing the basic information
+            print(f'ENTRY_NO: {i}')
+            print(f'TITLE: {judul}')
+            print(f'NIP: {nip}')
+            print(f'NAME: {nama}')
+            print(f'NUMBER_OF_MEMBERS: {jml_anggota}')
+            # Getting the each individual 'list_anggota' array string item
+            print('MEMBERS:')
+            for a in list_anggota:
+                member = a.replace('\r','').replace('\n','').strip()
+                print(f' ⯈ {member}')
+            print('=======================================================')
+
+            # Reopening the "Dana Penelitian" list page,
+            # then assign the AJAX response to the temporary array 'temporary_prompt'
+            # The 'data' array is obtained from opening individual entry row detail page
+            temporary_prompt = self.get_risat_penelitian_dana_penelitian(data)
+            continue
 
     # This function harvests "Risat Laporan Akhir Penelitian > Data Detil Lengkap" data
     # and then store the harvested data as an excel file
@@ -3724,7 +3971,7 @@ class DevelopmentTest():
         backend = BackEndHarvester()
 
         # Opening the 'Pengabdian Arsip' page
-        data_prompt = backend.get_risat_login()
+        data_prompt = backend.get_risat_login('', '')
         data_prompt = backend.get_risat_pengabdian(data_prompt)
         data_prompt = backend.get_risat_pengabdian_arsip(data_prompt)
 
@@ -3759,6 +4006,22 @@ class DevelopmentTest():
         print('+ Printing the array ...')
         print(array_of_files)
 
+    # On 2023-05-22
+    # Testing out the scraper of 'Dana Penelitian Detil'
+    # Running the function 'test_harvest_r_1_dana'
+    def experiment_7(self):
+        # Preamble
+        print('+ Running experiment_7: Testing out the scraper of "Dana Penelitian Detil" ...')
+
+        # Initializing the harvester back-end
+        backend = BackEndHarvester()
+
+        # Getting the array of files of the scraped detail pages
+        backend.test_harvest_r_1_dana(self.user_, self.pass_)
+
+        # Done!
+        print('+ Done!')
+
     # Wrapper of the developmental tester
     def launch_experiment_wrapper(self):
 
@@ -3777,6 +4040,8 @@ class DevelopmentTest():
                 self.experiment_5()
             case 6:
                 self.experiment_6()
+            case 7:
+                self.experiment_7()
             case _:
                 print('+ Error! Command not available!')
 
@@ -3803,9 +4068,9 @@ HTTP_RESPONSE_DUMPER = '/tmp/http_dumper.html'
 # Development testing
 # Not required for end-user usages
 # Should be commented out by final release to the public
-# dev = DevelopmentTest()
-# dev.launch_experiment_wrapper()
+dev = DevelopmentTest()
+dev.launch_experiment_wrapper()
 
 # Initializing the GUI
-app_gui = MainGUI()
-app_gui.mainloop()
+# app_gui = MainGUI()
+# app_gui.mainloop()
