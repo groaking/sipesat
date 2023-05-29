@@ -14,7 +14,9 @@
 >   convert from 'test_' into 'run_'
 
 > On 2023-05-29:
-> Do as follow: Generalizes 'run_harvest_r_1_dana' into the following functions:
+> Do the following:
+> - Fix 'Rumpun Ilmu' column data not showing every information from the Risat site
+> Then attempt to generalize 'run_harvest_r_1_dana' into the following functions:
 > - run_harvest_c_1_arsip
 > - run_harvest_c_1_dana
 > - run_harvest_r_1_arsip
