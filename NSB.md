@@ -13,10 +13,16 @@
 > - DO-OR-DELEGATE: Integrate with the GUI's control element and then
 >   convert from 'test_' into 'run_'
 
-> On 2023-05-29:
+> On 2023-05-29: 🔁 [2023-06-05][Some are cleared]
 > Do the following:
-> - Fix 'Rumpun Ilmu' column data not showing every information from the Risat site
+> - Fix 'Rumpun Ilmu' column data not showing every information from the Risat site ✅
 > Then attempt to generalize 'run_harvest_r_1_dana' into the following functions:
+> - run_harvest_c_1_arsip ✅ (successful testing)
+> - run_harvest_c_1_dana ✅
+> - run_harvest_r_1_arsip 🔁
+
+> On 2023-06-05:
+> Do the following:
+> - Finish up the 'test_harvest_r_1_arsip' function
+> Then generalize 'run_harvest_r_1_arsip' into the following function:
 > - run_harvest_c_1_arsip
-> - run_harvest_c_1_dana
-> - run_harvest_r_1_arsip
