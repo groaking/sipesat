@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5336fbe5-a446-43fd-bd94-c494f17ae9f7" name="Changes" comment="Initial edit of `test_harvest_r_1_dana`&#10;&#10;Successfully migrated the recursive autoscraper from the code under `/ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py`&#10;&#10;Set up the initial (i.e., before 'anggota') &quot;Risat Data Penelitian Detil&quot; worksheet headers and sub-headers" />
+    <list default="true" id="5336fbe5-a446-43fd-bd94-c494f17ae9f7" name="Changes" comment="Initial edit of `test_harvest_r_1_dana`&#10;&#10;Successfully migrated the recursive autoscraper from the code under `/ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py`&#10;&#10;Set up the initial (i.e., before 'anggota') &quot;Risat Data Penelitian Detil&quot; worksheet headers and sub-headers">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
