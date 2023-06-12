@@ -239,7 +239,7 @@ class SipesatScrLogin(tk.Frame):
     # The function that will be triggered when the 'LICENSE' button is pressed
     def on_license_button_click(self):
         license_title = 'LISENSI'
-        license_content = 'Copyright (c) 2023 groaking. All rights reserved.'
+        license_content = 'Copyright (c) 2023 Samarthya Lykamanuella. All rights reserved.'
         messagebox.showinfo(license_title, license_content)
     
     # The function that will be triggered when the 'EXIT' button is pressed
@@ -677,6 +677,9 @@ class SipesatScrHarvest(tk.Frame):
         # Disables the cancel button
         self.cancel_button.config(state='disabled')
         self.update()  # --- avoids freezing
+        # Disables the start button
+        self.start_button.config(state='disabled')
+        self.update()  # --- avoids freezing
         # Calling the back-end harvester class
         harvester = BackEndHarvester()
         # Begin the harvesting process
@@ -724,6 +727,10 @@ class SipesatScrHarvest(tk.Frame):
 
         # Change the helper status display
         self.set_help_label('Data selesai dipanen!')
+
+        # Re-enable the 'start' button
+        self.start_button.config(state='normal')
+        self.update()  # --- avoids freezing
 
         # Showing info window
         harvest_success_title = 'PEMANENAN DATA SELESAI'
@@ -984,10 +991,7 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        # DEBUG ONLY
-                        self.test_harvest_r_1_arsip(control, username, password)
-                        # Replace with the following after debug
-                        # self.run_harvest_r_1_arsip(control, username, password)
+                        self.run_harvest_r_1_arsip(control, username, password)
                     case 'dana':
                         self.run_harvest_r_1_dana(control, username, password)
                     case 'lapakhir':
@@ -1013,7 +1017,7 @@ class BackEndHarvester():
                 # Determining the cases of the data output
                 match output:
                     case 'arsip':
-                        pass
+                        self.run_harvest_c_1_arsip(control, username, password)
                     case 'dana':
                         self.run_harvest_c_1_dana(control, username, password)
                     case 'lapakhir':
@@ -2611,43 +2615,131 @@ class BackEndHarvester():
             # Getting the static (non-variable as in "Data Anggota") detail information
             # ---
             a1 = str(i+1)
-            b2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            c2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            d2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ttkt1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            e2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddllevel1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            f2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            g2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                b2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                b2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                c2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                c2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                d2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ttkt1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                d2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                e2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddllevel1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                e2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                f2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                f2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                g2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                g2 = ''
             # 'Rumpun Ilmu' scraped data contains multiple array of strings
             # This needs some extra tweaking
             h2 = ''
-            h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[7][@class="row f12"]/div[@class="col-sm-4"]//text()')
-            for l in h2_pre:
-                l = l.replace('\r','').replace('\n','').strip()
-                h2 += l +', '
-            # Remove trailing ', ' characters
-            h2 = h2[:-2]
+            # Use try-except catching to mitigate empty data
+            try:
+                h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[7][@class="row f12"]/div[@class="col-sm-4"]//text()')
+                for l in h2_pre:
+                    l = l.replace('\r','').replace('\n','').strip()
+                    h2 += l +', '
+                # Remove trailing ', ' characters
+                h2 = h2[:-2]
+            except IndexError:
+                h2 = ''
             # ---
-            i2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            j2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            k2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltopik1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            l2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            m2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            n2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
-            o2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
-            p2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                i2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                i2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                j2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                j2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                k2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltopik1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                k2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                l2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                l2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                m2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                m2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                n2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                n2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                o2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                o2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                p2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                p2 = ''
             # Some 'Data Detil' has no 'Mitra' data element
             # Use try-except catching to mitigate
             try:
                 q2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tnmmitra1"]/text()')[0].replace('\r','').replace('\n','').strip()
             except IndexError:
                 q2 = ''
-            r2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            s2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
-            t2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[1]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            u2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[2]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            v2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[3]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            w2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[4]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            x2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[5]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                r2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                r2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                s2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                s2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                t2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[1]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                t2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                u2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[2]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                u2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                v2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[3]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                v2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                w2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[4]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                w2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                x2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_bio2_updk1"]/div[5]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                x2 = ''
             
             # Painting the static (non-variable as in "Data Anggota") detail information
             sheet[f'A{row_start}'].value = a1
@@ -2761,7 +2853,12 @@ class BackEndHarvester():
             # Reopening the "Dana Penelitian" list page,
             # then assign the AJAX response to the temporary array 'temporary_prompt'
             # The 'data' array is obtained from opening individual entry row detail page
-            temporary_prompt = self.get_risat_penelitian_dana_penelitian(data)
+            #
+            # This is done only on the 7-multiple row iteration, because
+            # a single set of 'viewstate', 'viewstategen', and 'eventvalidation' values of ASPX
+            # can only be used to do at most 8 operations before having to be renewed.
+            if ( i % 7 == 0 ) and ( i > 0 ):
+                temporary_prompt = self.get_risat_penelitian_dana_penelitian(data)
             continue
         
         # Post-loop logging: appending the header over the 'DATA ANGGOTA' columns
@@ -2860,14 +2957,17 @@ class BackEndHarvester():
     # - control             --> for updating the progress bar and
     #                           message area of the screen SipesatScrHarvest
     # - username, password  --> the Risat administrator username and password
-    #
-    # DEBUG ONLY
-    def test_harvest_r_1_arsip(self, control, username, password):
-    # Replace with the following after debug:
-    # def run_harvest_r_1_arsip(self, control, username, password):
+    def run_harvest_r_1_arsip(self, control, username, password):
+
+        # Dodge Python function documentation
+        '''
+        '''
 
         # Give a warning about bugs in 'Arsip' data harvester
         # This bug is due to Risat's server lag, not because of this program by itself
+        # (Just in case. As per 2023-06-12, turns out the 'Arsip' page of Risat
+        # does not always load in 30 seconds -- depending on circumstances)
+        '''
         messagebox.showerror(
             title='Pesan Pengembang',
             message='' +
@@ -2881,6 +2981,7 @@ class BackEndHarvester():
                     '\n\n' +
                     'Pengembang SiPe.Sat meminta maaf atas ketidaknyamanan ini.'
         )
+        '''
 
         # SipesatScrHarvest messenger
         control.set_header_desc('Panen Data "Risat Arsip Penelitian > Ringkasan Data"')
@@ -3033,13 +3134,6 @@ class BackEndHarvester():
 
         # Reading the HTML entry row hidden ASPX values
         # Copy-pasted from: /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
-        '''
-        all_idat_prop = content.xpath(base + '//tr[2][@valign="top"]/td[3]/input[1][@type="hidden"]/@name')
-        all_idat_val = content.xpath(base + '//tr[2][@valign="top"]/td[3]/input[1][@type="hidden"]/@value')
-        all_itgl_prop = content.xpath(base + '//tr[2][@valign="top"]/td[3]/input[2][@type="hidden"]/@name')
-        all_itgl_val = content.xpath(base + '//tr[2][@valign="top"]/td[3]/input[2][@type="hidden"]/@value')
-        all_submitbtn = content.xpath(base + '//tr[2][@valign="top"]/td[2]/table//tr[5]//input[@type="submit"]/@name')
-        '''
         all_idat_prop = content.xpath(base + '//input[1][@type="hidden"]/@name')
         all_idat_val = content.xpath(base + '//input[1][@type="hidden"]/@value')
         all_itgl_prop = content.xpath(base + '//input[2][@type="hidden"]/@name')
@@ -3053,7 +3147,7 @@ class BackEndHarvester():
         # DEBUG
         # Please comment out after use
         # ---
-        print(f'NUMBER_OF_ROW_LEN: {number_of_row}')
+        # print(f'NUMBER_OF_ROW_LEN: {number_of_row}')
         
         # The starting row coordinate of the active sheet
         row_start = 3
@@ -3136,43 +3230,131 @@ class BackEndHarvester():
             # Getting the static (non-variable as in "Data Anggota") detail information
             # ---
             a1 = str(i+1)
-            b2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            c2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            d2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ttkt1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            e2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddllevel1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            f2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            g2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                b2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                b2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                c2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                c2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                d2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ttkt1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                d2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                e2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddllevel1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                e2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                f2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                f2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                g2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                g2 = ''
             # 'Rumpun Ilmu' scraped data contains multiple array of strings
             # This needs some extra tweaking
             h2 = ''
-            h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[7][@class="row f12"]/div[@class="col-sm-4"]//text()')
-            for l in h2_pre:
-                l = l.replace('\r','').replace('\n','').strip()
-                h2 += l +', '
-            # Remove trailing ', ' characters
-            h2 = h2[:-2]
+            # Use try-except catching to mitigate empty data
+            try:
+                h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[7][@class="row f12"]/div[@class="col-sm-4"]//text()')
+                for l in h2_pre:
+                    l = l.replace('\r','').replace('\n','').strip()
+                    h2 += l +', '
+                # Remove trailing ', ' characters
+                h2 = h2[:-2]
+            except IndexError:
+                h2 = ''
             # ---
-            i2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            j2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            k2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddltopik1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            l2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            m2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            n2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
-            o2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
-            p2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                i2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                i2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                j2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                j2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                k2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddltopik1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                k2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                l2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                l2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                m2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                m2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                n2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                n2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                o2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                o2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                p2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                p2 = ''
             # Some 'Data Detil' has no 'Mitra' data element
             # Use try-except catching to mitigate
             try:
                 q2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tnmmitra1"]/text()')[0].replace('\r','').replace('\n','').strip()
             except IndexError:
                 q2 = ''
-            r2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            s2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
-            t2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[1]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            u2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[2]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            v2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[3]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            w2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[4]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            x2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[5]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                r2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                r2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                s2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                s2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                t2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[1]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                t2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                u2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[2]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                u2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                v2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[3]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                v2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                w2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[4]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                w2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                x2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_bio2_updk1"]/div[5]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                x2 = ''
             
             # Painting the static (non-variable as in "Data Anggota") detail information
             sheet[f'A{row_start}'].value = a1
@@ -3203,6 +3385,7 @@ class BackEndHarvester():
             # DEBUG
             # Please comment out after use
             # ---
+            '''
             print()
             print('-------------------------------------------------------------------------------------------------------')
             print(f' > DEBUG LOGGING FOR DATA ITERATION NO. {i}: NON-ANGGOTA DATA')
@@ -3233,6 +3416,7 @@ class BackEndHarvester():
             print(f'X2 = {x2}')
             print('-------------------------------------------------------------------------------------------------------', end='')
             print()
+            '''
             
             # The table which displays 'Identitas Pengusul - Anggota Peneliti'
             # Treated differently, specially
@@ -3313,6 +3497,7 @@ class BackEndHarvester():
                     # DEBUG
                     # Please comment out after use
                     # ---
+                    '''
                     print()
                     print('-------------------------------------------------------------------------------------------------------')
                     print(f' > DEBUG LOGGING FOR DATA ITERATION NO. {i}: ANGGOTA DATA {j}')
@@ -3328,6 +3513,7 @@ class BackEndHarvester():
                     print(f'y_row_i[{j}] = {y_row_i[j]}')
                     print('-------------------------------------------------------------------------------------------------------', end='')
                     print()
+                    '''
 
                     # Incrementing the 'col_start' iterator before continuing the loop
                     col_start += 9
@@ -3336,7 +3522,7 @@ class BackEndHarvester():
             # Incrementing the value of 'row_start' before continuing
             row_start += 1
 
-            # Reopening the "Dana Penelitian" list page,
+            # Reopening the "Arsip Penelitian" list page,
             # then assign the AJAX response to the temporary array 'temporary_prompt'
             # The 'data' array is obtained from opening individual entry row detail page
             #
@@ -4598,51 +4784,127 @@ class BackEndHarvester():
             # Getting the static (non-variable as in "Data Anggota") detail information
             # ---
             a1 = str(i+1)
-            b2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            c2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                b2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                b2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                c2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                c2 = ''
             # 'Pengabdian Masyarakat' ain't have TKT (d2) and level (e2) data!
             # ---
             d2 = '-'
             e2 = '-'
-            f2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            g2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                f2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                f2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                g2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                g2 = ''
             # 'Rumpun Ilmu' scraped data contains multiple array of strings
             # This needs some extra tweaking
             h2 = ''
-            h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[5][@class="row f12"]/div[@class="col-sm-4"]//text()')
-            for l in h2_pre:
-                l = l.replace('\r','').replace('\n','').strip()
-                h2 += l +', '
-            # Remove trailing ', ' characters
-            h2 = h2[:-2]
+            # Use try-except catching to mitigate empty data
+            try:
+                h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[5][@class="row f12"]/div[@class="col-sm-4"]//text()')
+                for l in h2_pre:
+                    l = l.replace('\r','').replace('\n','').strip()
+                    h2 += l +', '
+                # Remove trailing ', ' characters
+                h2 = h2[:-2]
+            except IndexError:
+                h2 = ''
             # ---
-            i2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            j2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                i2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                i2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                j2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                j2 = ''
             # Some 'Topik' has no data element
             # Use try-except catching to mitigate
             try:
                 k2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddltopik1"]/text()')[0].replace('\r','').replace('\n','').strip()
             except IndexError:
                 k2 = ''
-            l2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            m2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            n2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
-            o2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
-            p2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            # Use try-except catching to mitigate empty data
+            try:
+                l2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                l2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                m2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                m2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                n2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                n2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                o2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                o2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                p2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                p2 = ''
             # Some 'Data Detil' has no 'Mitra' data element
             # Use try-except catching to mitigate
             try:
                 q2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tnmmitra1"]/text()')[0].replace('\r','').replace('\n','').strip()
             except IndexError:
                 q2 = ''
-            r2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').strip()
-            s2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
-            t2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[1][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            u2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[2][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            v2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[3][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            w2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[4][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-            x2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[5][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
-
+            # Use try-except catching to mitigate empty data
+            try:
+                r2 = content.xpath('//span[@id="ContentPlaceHolder1_danacair1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                r2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                s2 = content.xpath('//a[@id="ContentPlaceHolder1_danacair1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                s2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                t2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[1][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                t2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                u2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[2][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                u2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                v2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[3][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                v2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                w2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[4][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                w2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                x2 = content.xpath('//div[@id="ContentPlaceHolder1_danacair1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[5][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                x2 = ''
+            
             # Painting the static (non-variable as in "Data Anggota") detail information
             sheet[f'A{row_start}'].value = a1
             sheet[f'B{row_start}'].value = b2
@@ -4752,10 +5014,15 @@ class BackEndHarvester():
             # Incrementing the value of 'row_start' before continuing
             row_start += 1
 
-            # Reopening the "Dana Penelitian" list page,
+            # Reopening the "Dana Pengabdian" list page,
             # then assign the AJAX response to the temporary array 'temporary_prompt'
             # The 'data' array is obtained from opening individual entry row detail page
-            temporary_prompt = self.get_risat_pengabdian_dana_pengabdian(data)
+            #
+            # This is done only on the 7-multiple row iteration, because
+            # a single set of 'viewstate', 'viewstategen', and 'eventvalidation' values of ASPX
+            # can only be used to do at most 8 operations before having to be renewed.
+            if ( i % 7 == 0 ) and ( i > 0 ):
+                temporary_prompt = self.get_risat_pengabdian_dana_pengabdian(data)
             continue
 
         # Post-loop logging: appending the header over the 'DATA ANGGOTA' columns
@@ -4807,6 +5074,670 @@ class BackEndHarvester():
             output_spreadsheet = filedialog.asksaveasfilename(
                 filetypes=[('Excel files', '*.xlsx')],
                 initialfile='Sipesat - Dana Pengabdian Detil Risat.xlsx',
+                title='Simpan sebagai ...'
+            )
+
+            # 'cancel' button in the dialog prompt is clicked
+            if len(output_spreadsheet) == 0:
+                # Showing confirmation
+                x = messagebox.askyesno(
+                    'Nama File Kosong',
+                    'Apakah Anda yakin ingin melanjutkan tanpa menyimpan file spreadsheet hasil pemanenan?'
+                )
+                # Determining whether to break or to continue the loop
+                # based on the inversed value of 'x'
+                if x:
+                    control.append_message_area(
+                        f'+ Finalisasi pemanenan data tanpa menyimpan file spreadsheet luaran ...')
+                    workbook.close()  # --- closing the workbook without saving
+                    break
+                else:
+                    continue  # --- continuing the loop
+            # File name does not end in spreadsheet extension
+            elif output_spreadsheet[-5:] != '.xlsx':
+                output_spreadsheet = output_spreadsheet + '.xlsx'
+
+            # Saving the spreadsheet
+            control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+            control.set_progress_bar(95)
+            workbook.save(output_spreadsheet)
+
+            # Closing the openpyxl workbook
+            control.append_message_area(f'+ Menutup file spreadsheet ...')
+            control.set_progress_bar(98)
+            workbook.close()
+
+            # Breaking the loop
+            break
+
+        # Notify for a successful scraping
+        control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
+        control.set_progress_bar(100)
+        control.on_notify_successful_scraping()
+
+    # This function harvests "Risat Arsip Pengabdian > Ringkasan Detil" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    def run_harvest_c_1_arsip(self, control, username, password):
+
+        # Dodge Python function documentation
+        '''
+        '''
+
+        # Give a warning about bugs in 'Arsip' data harvester
+        # This bug is due to Risat's server lag, not because of this program by itself
+        # (Just in case. As per 2023-06-12, turns out the 'Arsip' page of Risat
+        # does not always load in 30 seconds -- depending on circumstances)
+        '''
+        messagebox.showerror(
+            title='Pesan Pengembang',
+            message='' +
+                    'Dikarenakan kendala teknis pada server risat.uksw.edu, ' +
+                    'data arsip Risat membutuhkan waktu sekitar 30 detik untuk dapat termuat. ' +
+                    'Setiap pemuatan dari server, sebanyak 7 data dapat dipanen sekaligus. ' +
+                    'Sehingga, secara keseluruhan dibutuhkan waktu sekitar 4 menit (dengan asumsi jumlah data sebanyak 50) ' +
+                    'untuk dapat memanen semua data arsip Risat. ' +
+                    'Antarmuka program SiPe.Sat akan sesekali membeku dan tombol-tombolnya hilang ' +
+                    'selama pemanenan berlangsung karena menunggu pemuatan data arsip dari server risat.uksw.edu. ' +
+                    '\n\n' +
+                    'Pengembang SiPe.Sat meminta maaf atas ketidaknyamanan ini.'
+        )
+        '''
+
+        # SipesatScrHarvest messenger
+        control.set_header_desc('Panen Data "Risat Arsip Pengabdian > Ringkasan Data"')
+        control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        control.set_progress_bar(0)
+        control.clear_message_area()
+
+        # Preamble logging
+        control.append_message_area(f'+ Memulai pemanenan data ...')
+        control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_pengabdian(data_prompt)
+        data_prompt = self.get_risat_pengabdian_arsip(data_prompt)
+
+        # Parsing XML tree content
+        control.append_message_area(f'+ Membaca halaman web ...')
+        control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Arsip Pengabdian Detil'
+
+        # DEVELOPER'S NOTE (DO NOT REMOVE)
+        '''
+        Data yang perlu diambil:
+        1. Judul
+        2. Substansi usulan
+        3. Identitas pengusul - ketua
+        4. Identitas pengusul - anggota
+        5. RAB
+        6. Dokumen pendukung
+        
+        Urutan kolom excel:
+        1. Judul
+        2. Substansi usulan
+        3. RAB
+        4. Dokumen pendukung
+        5. Identitas pengusul - ketua
+        6. Identitas pengusul - anggota
+        '''
+
+        # Preparing the sheet header
+        control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        control.set_progress_bar(25)
+        # ---
+        # Preparing the "NOMOR" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=1,
+            end_row=2,
+            end_column=1
+        )
+        sheet['A1'].value = 'No.'
+        sheet['A1'].alignment = Alignment(horizontal='center')
+        # ---
+        # Preparing the "JUDUL" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=2,
+            end_row=1,
+            end_column=12
+        )
+        sheet['B1'].value = 'IDENTITAS'
+        sheet['B1'].alignment = Alignment(horizontal='center')
+        # Preparing the "JUDUL" sub-headers
+        sheet['B2'].value = 'Judul'
+        sheet['C2'].value = 'Tgl. Usulan'
+        sheet['D2'].value = 'TKT Saat Ini'
+        sheet['E2'].value = 'Level'
+        sheet['F2'].value = 'Kategori'
+        sheet['G2'].value = 'Skema'
+        sheet['H2'].value = 'Rumpun Ilmu'
+        sheet['I2'].value = 'Bidang Fokus'
+        sheet['J2'].value = 'Tema'
+        sheet['K2'].value = 'Topik'
+        sheet['L2'].value = 'Lama Kegiatan'
+        # ---
+        # Preparing the "SUBSTANSI USULAN" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=13,
+            end_row=1,
+            end_column=14
+        )
+        sheet['M1'].value = 'SUBSTANSI USULAN'
+        sheet['M1'].alignment = Alignment(horizontal='center')
+        # Preparing the "SUBSTANSI USULAN" sub-headers
+        sheet['M2'].value = 'Kelompok Makro'
+        sheet['N2'].value = 'File Proposal'
+        # ---
+        # Preparing the "RAB" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=15,
+            end_row=1,
+            end_column=16
+        )
+        sheet['O1'].value = 'RENCANA ANGGARAN BIAYA'
+        sheet['O1'].alignment = Alignment(horizontal='center')
+        # Preparing the "RAB" sub-headers
+        sheet['O2'].value = 'Biaya'
+        sheet['P2'].value = 'File RAB'
+        # ---
+        # Preparing the "DOKUMEN PENDUKUNG" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=17,
+            end_row=1,
+            end_column=19
+        )
+        sheet['Q1'].value = 'DOKUMEN PENDUKUNG'
+        sheet['Q1'].alignment = Alignment(horizontal='center')
+        # Preparing the "DOKUMEN PENDUKUNG" sub-headers
+        sheet['Q2'].value = 'Mitra'
+        sheet['R2'].value = 'Dukungan Biaya'
+        sheet['S2'].value = 'Surat Dukungan Mitra'
+        # ---
+        # Preparing the "IDENTITAS PENGUSUL — KETUA" header
+        sheet.merge_cells(
+            start_row=1,
+            start_column=20,
+            end_row=1,
+            end_column=24
+        )
+        sheet['T1'].value = 'IDENTITAS PENGUSUL — KETUA'
+        sheet['T1'].alignment = Alignment(horizontal='center')
+        # Preparing the "IDENTITAS PENGUSUL — KETUA" sub-headers
+        sheet['T2'].value = 'N.I.P'
+        sheet['U2'].value = 'N.I.K'
+        sheet['V2'].value = 'N.I.D.N'
+        sheet['W2'].value = 'Nama Lengkap'
+        sheet['X2'].value = 'Jabatan Fungsional'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@id="ContentPlaceHolder1_arsip1_updg1"]//div[@class="panel-body f12"]/table[@width="100%"]'
+
+        # ---
+        # Obtaining the data row values
+        control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        control.set_progress_bar(30)
+
+        # Reading the HTML entry row hidden ASPX values
+        # Copy-pasted from: /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
+        all_idat_prop = content.xpath(base + '//input[1][@type="hidden"]/@name')
+        all_idat_val = content.xpath(base + '//input[1][@type="hidden"]/@value')
+        all_itgl_prop = content.xpath(base + '//input[2][@type="hidden"]/@name')
+        all_itgl_val = content.xpath(base + '//input[2][@type="hidden"]/@value')
+        all_submitbtn = content.xpath(base + '//input[@type="submit"]/@name')
+
+        # The number of rows
+        # Assumes the 'all_' array size equals the number of data rows
+        number_of_row = len(all_idat_prop)
+
+        # DEBUG
+        # Please comment out after use
+        # ---
+        # print(f'NUMBER_OF_ROW_LEN: {number_of_row}')
+        
+        # The starting row coordinate of the active sheet
+        row_start = 3
+        
+        # The maximum number of 'DATA ANGGOTA' table data row
+        y_max_row = 0
+
+        # Iterating through each entry row element
+        # Assumes all the 'all_' arrays in the previous code block
+        # are of the same length/size
+        # Copy-pasted from: /ssynthesia/ghostcity/ar/dumper-2/24__2023.02.13__requestsrisat.py
+        control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        control.set_progress_bar(35)
+        temporary_prompt = data_prompt
+        for i in range(number_of_row):
+            # Noisy preamble logging
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
+            control.set_progress_bar(35 + round(45 * (i + 1) / number_of_row))
+
+            # Preparing the AJAX payload
+            detail_prompt = {
+                'viewstate' : temporary_prompt['viewstate'],
+                'viewstategen' : temporary_prompt['viewstategen'],
+                'eventvalidation' : temporary_prompt['eventvalidation'],
+                'button_name' : all_submitbtn[i],
+                'idat_prop' : all_idat_prop[i],
+                'idat_val' : all_idat_val[i],
+                'itgl_prop' : all_itgl_prop[i],
+                'itgl_val' : all_itgl_val[i]
+            }
+
+            # Obtaining the response data of each individual entry row detail page
+            data = self.get_risat_pengabdian_arsip_detil(detail_prompt)
+            content = data['html_content']
+            response = data['http_response']
+            
+            # Terminal logging for detecting errors
+            log_string_1 = str(i+1)
+            log_string_2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            control.append_message_area(f'+ Memanen data detil: [{log_string_1}] {log_string_2} ...')
+            print(f'+ Harvesting detailed data: [{log_string_1}] {log_string_2}')
+            
+            # DEVELOPER'S NOTE (DO NOT REMOVE)
+            '''
+            Variables and their associated data
+            
+            'a1' ==> 'No.'
+            'b2' ==> 'Judul'
+            'c2' ==> 'Tgl. Usulan'
+            'd2' ==> 'TKT Saat Ini'
+            'e2' ==> 'Level'
+            'f2' ==> 'Kategori'
+            'g2' ==> 'Skema'
+            'h2' ==> 'Rumpun Ilmu'
+            'i2' ==> 'Bidang Fokus'
+            'j2' ==> 'Tema'
+            'k2' ==> 'Topik'
+            'l2' ==> 'Lama Kegiatan'
+            'm2' ==> 'Kelompok Makro'
+            'n2' ==> 'File Proposal'
+            'o2' ==> 'Biaya'
+            'p2' ==> 'File RAB'
+            'q2' ==> 'Mitra'
+            'r2' ==> 'Dukungan Biaya'
+            's2' ==> 'Surat Dukungan Mitra'
+            't2' ==> 'N.I.P'
+            'u2' ==> 'N.I.K'
+            'v2' ==> 'N.I.D.N'
+            'w2' ==> 'Nama Lengkap'
+            'x2' ==> 'Jabatan Fungsional'
+            
+            In addition, variables starting with 'y' prefix are pertaining
+            to the table data of "Data Anggota"
+            '''
+
+            # Getting the static (non-variable as in "Data Anggota") detail information
+            # ---
+            a1 = str(i+1)
+            # Use try-except catching to mitigate empty data
+            try:
+                b2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_txjudul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                b2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                c2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tglusul1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                c2 = ''
+            d2 = '-'
+            e2 = '-'
+            # Use try-except catching to mitigate empty data
+            try:
+                f2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_lkat1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                f2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                g2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlskema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                g2 = ''
+            # 'Rumpun Ilmu' scraped data contains multiple array of strings
+            # This needs some extra tweaking
+            h2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                h2_pre = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[1][@class="panel panel-info"]/div[@class="panel-body f12"]/div[7][@class="row f12"]/div[@class="col-sm-4"]//text()')
+                for l in h2_pre:
+                    l = l.replace('\r','').replace('\n','').strip()
+                    h2 += l +', '
+                    # Remove trailing ', ' characters
+                    h2 = h2[:-2]
+            except IndexError:
+                h2 = ''
+            # ---
+            # Use try-except catching to mitigate empty data
+            try:
+                i2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlfokus1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                i2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                j2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddltema1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                j2 = ''
+            # Use try-except catching to mitigate data
+            try:
+                k2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddltopik1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                k2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                l2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddllama1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                l2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                m2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_ddlmakro1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                m2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                n2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblcatatan1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                n2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                o2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tbiayathn1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                o2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                p2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblfilerab1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                p2 = ''
+            # Some 'Data Detil' has no 'Mitra' data element
+            # Use try-except catching to mitigate
+            try:
+                q2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tnmmitra1"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                q2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                r2 = content.xpath('//span[@id="ContentPlaceHolder1_arsip1_kiri1_tbiayadukung1"]/text()')[0].replace('\r','').replace('\n','').replace('Rp.', '').replace(',', '').strip()
+            except IndexError:
+                r2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                s2 = content.xpath('//a[@id="ContentPlaceHolder1_arsip1_kiri1_alblfilemitradukung1"]/@href')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                s2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                t2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[1][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                t2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                u2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[2][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                u2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                v2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[3][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                v2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                w2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[4][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                w2 = ''
+            # Use try-except catching to mitigate empty data
+            try:
+                x2 = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[3][@class="panel panel-info"]/div[@class="panel-body f12"]/div[5][@class="row"]/div[@class="col-sm-4"]/text()')[0].replace('\r','').replace('\n','').strip()
+            except IndexError:
+                x2 = ''
+
+            # Painting the static (non-variable as in "Data Anggota") detail information
+            sheet[f'A{row_start}'].value = a1
+            sheet[f'B{row_start}'].value = b2
+            sheet[f'C{row_start}'].value = c2
+            sheet[f'D{row_start}'].value = d2
+            sheet[f'E{row_start}'].value = e2
+            sheet[f'F{row_start}'].value = f2
+            sheet[f'G{row_start}'].value = g2
+            sheet[f'H{row_start}'].value = h2
+            sheet[f'I{row_start}'].value = i2
+            sheet[f'J{row_start}'].value = j2
+            sheet[f'K{row_start}'].value = k2
+            sheet[f'L{row_start}'].value = l2
+            sheet[f'M{row_start}'].value = m2
+            sheet[f'N{row_start}'].value = n2
+            sheet[f'O{row_start}'].value = o2
+            sheet[f'P{row_start}'].value = p2
+            sheet[f'Q{row_start}'].value = q2
+            sheet[f'R{row_start}'].value = r2
+            sheet[f'S{row_start}'].value = s2
+            sheet[f'T{row_start}'].value = t2
+            sheet[f'U{row_start}'].value = u2
+            sheet[f'V{row_start}'].value = v2
+            sheet[f'W{row_start}'].value = w2
+            sheet[f'X{row_start}'].value = x2
+
+            # DEBUG
+            # Please comment out after use
+            # ---
+            '''
+            print()
+            print('-------------------------------------------------------------------------------------------------------')
+            print(f' > DEBUG LOGGING FOR DATA ITERATION NO. {i}: NON-ANGGOTA DATA')
+            print('-------------------------------------------------------------------------------------------------------')
+            print(f'A1 = {a1}')
+            print(f'B2 = {b2}')
+            print(f'C2 = {c2}')
+            print(f'D2 = {d2}')
+            print(f'E2 = {e2}')
+            print(f'F2 = {f2}')
+            print(f'G2 = {g2}')
+            print(f'H2 = {h2}')
+            print(f'I2 = {i2}')
+            print(f'J2 = {j2}')
+            print(f'K2 = {k2}')
+            print(f'L2 = {l2}')
+            print(f'M2 = {m2}')
+            print(f'N2 = {n2}')
+            print(f'O2 = {o2}')
+            print(f'P2 = {p2}')
+            print(f'Q2 = {q2}')
+            print(f'R2 = {r2}')
+            print(f'S2 = {s2}')
+            print(f'T2 = {t2}')
+            print(f'U2 = {u2}')
+            print(f'V2 = {v2}')
+            print(f'W2 = {w2}')
+            print(f'X2 = {x2}')
+            print('-------------------------------------------------------------------------------------------------------', end='')
+            print()
+            '''
+            
+            # The table which displays 'Identitas Pengusul - Anggota Peneliti'
+            # Treated differently, specially
+            # 'y_' is a DOM element representing a HTML table row (<tr>)
+            y_ = content.xpath('//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[4]//table[@class="table"]//tr[position()>1]')
+            
+            # The base path
+            y_base = '//div[@id="ContentPlaceHolder1_arsip1_kiri1_updx"]/div[4]//table[@class="table"]//tr[position()>1]'
+            
+            # Painting the scraped data to the output spreadsheet row
+            # Section: 'DATA ANGGOTA'
+            # ---
+            # Checking if 'Identitas Pengusul - Anggota Peneliti' table data exists
+            if len(y_) == 0:
+                pass  # --- nope. the data does not exist
+            else:
+                
+                # Checking if this table's 'LUARAN' data has the most rows
+                y_all_rows = len(y_)
+                y_max_row = max(y_max_row, y_all_rows)
+                
+                # ROW DATA LABEL CONVENTION
+                # y_row_a -> "N.I.P"
+                # y_row_b -> "Nama"
+                # y_row_c -> "Bidang Keahlian"
+                # y_row_d -> "Alamat"
+                # y_row_e -> "Instansi"
+                # y_row_f -> "Email"
+                # y_row_g -> "No. HP"
+                # y_row_h -> "Peran"
+                # y_row_i -> "Tugas"
+                
+                y_row_a = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[2]/text()')]
+
+                y_row_b = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[3]/text()')]
+
+                y_row_c = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[4]/text()')]
+
+                y_row_d = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[5]/text()')]
+
+                y_row_e = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[6]/text()')]
+
+                y_row_f = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[7]/text()')]
+
+                y_row_g = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[8]/text()')]
+
+                y_row_h = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[9]/text()')]
+
+                y_row_i = [l.replace('\r','').replace('\n','').strip()
+                      for l in content.xpath(y_base + '/td[10]/text()')]
+
+                # The starting column coordinate for filling the 'LUARAN' table data
+                col_start = 25
+                
+                # Iterating through each table row and write to the spreadsheet
+                # Assumes the lists y_row_a, y_row_b, ... have the same array size
+                for j in range(len(y_row_a)):
+
+                    # Painting table data
+                    sheet.cell(row=row_start, column=col_start).value = y_row_a[j]
+                    sheet.cell(row=row_start, column=col_start+1).value = y_row_b[j]
+                    sheet.cell(row=row_start, column=col_start+2).value = y_row_c[j]
+                    sheet.cell(row=row_start, column=col_start+3).value = y_row_d[j]
+                    sheet.cell(row=row_start, column=col_start+4).value = y_row_e[j]
+                    sheet.cell(row=row_start, column=col_start+5).value = y_row_f[j]
+                    sheet.cell(row=row_start, column=col_start+6).value = y_row_g[j]
+                    sheet.cell(row=row_start, column=col_start+7).value = y_row_h[j]
+                    sheet.cell(row=row_start, column=col_start+8).value = y_row_i[j]
+
+                    # DEBUG
+                    # Please comment out after use
+                    # ---
+                    '''
+                    print()
+                    print('-------------------------------------------------------------------------------------------------------')
+                    print(f' > DEBUG LOGGING FOR DATA ITERATION NO. {i}: ANGGOTA DATA {j}')
+                    print('-------------------------------------------------------------------------------------------------------')
+                    print(f'y_row_a[{j}] = {y_row_a[j]}')
+                    print(f'y_row_b[{j}] = {y_row_b[j]}')
+                    print(f'y_row_c[{j}] = {y_row_c[j]}')
+                    print(f'y_row_d[{j}] = {y_row_d[j]}')
+                    print(f'y_row_e[{j}] = {y_row_e[j]}')
+                    print(f'y_row_f[{j}] = {y_row_f[j]}')
+                    print(f'y_row_g[{j}] = {y_row_g[j]}')
+                    print(f'y_row_h[{j}] = {y_row_h[j]}')
+                    print(f'y_row_i[{j}] = {y_row_i[j]}')
+                    print('-------------------------------------------------------------------------------------------------------', end='')
+                    print()
+                    '''
+
+                    # Incrementing the 'col_start' iterator before continuing the loop
+                    col_start += 9
+                    continue
+                
+            # Incrementing the value of 'row_start' before continuing
+            row_start += 1
+
+            # Reopening the "Arsip Pengabdian" list page,
+            # then assign the AJAX response to the temporary array 'temporary_prompt'
+            # The 'data' array is obtained from opening individual entry row detail page
+            #
+            # This is done only on the 7-multiple row iteration, because
+            # a single set of 'viewstate', 'viewstategen', and 'eventvalidation' values of ASPX
+            # can only be used to do at most 8 operations before having to be renewed.
+            if ( i % 7 == 0 ) and ( i > 0 ):
+                temporary_prompt = self.get_risat_pengabdian_arsip(data)
+            continue
+        
+        # Post-loop logging: appending the header over the 'DATA ANGGOTA' columns
+        control.append_message_area(f'+ Melengkapi kepala tabel pada bagian "Identitas Pengusul - Anggota Pengabdian" ...')
+        # ---
+        # The starting column for the 'DATA ANGGOTA' data
+        col_start = 25
+        # Beginning the loop that detects the maximum number of 'LUARAN' rows
+        # according to the variable 'y_max_row'
+        for i in range(1, y_max_row+1):
+            # Setting the top header
+            sheet.merge_cells(
+                start_row=1,
+                start_column=col_start,
+                end_row=1,
+                end_column=col_start+8
+            )
+            sheet.cell(row=1, column=col_start).value = f'IDENTITAS PENGUSUL — ANGGOTA #{i}'
+            sheet.cell(row=1, column=col_start).alignment = Alignment(horizontal='center')
+            # Setting the sub headers
+            sheet.cell(row=2, column=col_start).value = 'N.I.P'
+            sheet.cell(row=2, column=col_start+1).value = 'Nama'
+            sheet.cell(row=2, column=col_start+2).value = 'Bidang Keahlian'
+            sheet.cell(row=2, column=col_start+3).value = 'Alamat'
+            sheet.cell(row=2, column=col_start+4).value = 'Instansi'
+            sheet.cell(row=2, column=col_start+5).value = 'Email'
+            sheet.cell(row=2, column=col_start+6).value = 'No. HP'
+            sheet.cell(row=2, column=col_start+7).value = 'Peran'
+            sheet.cell(row=2, column=col_start+8).value = 'Tugas'
+            # Incrementing the 'col_start' iterator before continuing the loop
+            col_start += 9
+            continue
+
+        # Post-loop logging: successfully painted the output spreadsheet file
+        control.append_message_area(f'+ Tabel sukses dipanen!')
+        control.set_progress_bar(85)
+
+        # Asking for the spreadsheet name to save as
+        # ---
+        # Logging and setting the progress bar
+        control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
+        control.set_progress_bar(90)
+        # Dealing with file name prompt and saving
+        # Using loop to mitigate the user clicking 'cancel'
+        # in the file name dialog prompt
+        while True:
+            # Opening the dialog prompt
+            output_spreadsheet = filedialog.asksaveasfilename(
+                filetypes=[('Excel files', '*.xlsx')],
+                initialfile='Sipesat - Arsip Pengabdian Detil Risat.xlsx',
                 title='Simpan sebagai ...'
             )
 
