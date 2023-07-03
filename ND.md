@@ -17,3 +17,9 @@
 >   > t2 = content.xpath('.../text()')[0].strip()
 >   > ...
 >   should be wrapped in 'try-except' clause, to prevent future data empty cases
+
+> [2] On 2023-07-03:
+> As per Guitar's request, add the following functions (both on 'Penelitian' and 'Pengabdian' menu):
+> 1. Usulan penelitian
+> 2. Berkas direvisi
+> 3. Telah direviu
