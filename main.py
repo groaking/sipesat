@@ -67,6 +67,12 @@
 #   -> https://stackoverflow.com/questions/17191971
 # 24. Python: Using xpath locally / on a specific element
 #   -> https://stackoverflow.com/a/4785929
+#
+# (On 2023-07-25)
+# 25. Dropdown Menus – Tkinter
+#   -> https://www.geeksforgeeks.org/dropdown-menus-tkinter/
+# 26. Correct way to set scrollbar position in python tkinter
+#   -> https://stackoverflow.com/questions/53157859
 
 # [2] CODING CONVENTIONS:
 # 1. Use single quote (') instead of double quotes (") when specifying strings
@@ -157,11 +163,12 @@ from lxml import html
 from openpyxl.styles import Alignment
 from os.path import sep
 from tkinter import filedialog
-from tkinter import messagebox
-from tkinter import scrolledtext
-from tkinter import ttk
 from tkinter import IntVar
+from tkinter import messagebox
+from tkinter import OptionMenu
+from tkinter import scrolledtext
 from tkinter import StringVar
+from tkinter import ttk
 import openpyxl as xl
 import requests as rq
 import tempfile as tmp
@@ -446,10 +453,25 @@ class SipesatScrResearch(tk.Frame):
     
     # The function that will be triggered when the 'lanjut' button is hit
     def on_next_button_click(self):
+        # Interpreting the value of the dropdown menu
+        l = self.dropdown_harvest_type.get()  # --- temporary string
+        match l:
+            case 'Risat Dana Penelitian':
+                m = 'dana'
+            case 'Risat Arsip Penelitian':
+                m = 'arsip'
+            case 'Risat Laporan Akhir Penelitian':
+                m = 'lapakhir'
+            case _:
+                no_dropdown_selection_title = 'GALAT'
+                no_dropdown_selection_content = 'Silahkan pilih menu untuk melanjutkan!'
+                messagebox.showerror(no_dropdown_selection_title, no_dropdown_selection_content)
+                return
+
         # Setting the harvest arguments using the controller's 'self' variables
         self.controller.harvest_category = 'r'
         self.controller.harvest_datatype = self.radio_data_type.get()
-        self.controller.harvest_output = self.radio_harvest_type.get()
+        self.controller.harvest_output = m
         
         # Calling the harvester screen, begin the harvesting process
         self.controller.raise_frame(SipesatScrHarvest)
@@ -459,7 +481,7 @@ class SipesatScrResearch(tk.Frame):
         
         # The radiobutton variables, used to group different radiobutton together
         self.radio_data_type = IntVar()
-        self.radio_harvest_type = StringVar()
+        self.dropdown_harvest_type = StringVar()
         
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
@@ -511,23 +533,15 @@ class SipesatScrResearch(tk.Frame):
         harvesttype_text = 'Data Hasil Panenan'
         harvesttype_label = ttk.Label(layout_frame_2, text=harvesttype_text, font=FONT_REGULAR)
         harvesttype_label.grid(row=0, column=0, padx=2, pady=5)
-        # Radio button 1 -- 'Dana'
-        harvesttype_dana_text = 'Risat Dana Penelitian'
-        harvesttype_dana_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_dana_text,
-            value='dana', variable=self.radio_harvest_type)
-        harvesttype_dana_radio.grid(row=1, column=0, padx=2, pady=2, sticky='w')
-        # Radio button 2 -- 'Arsip'
-        harvesttype_arsip_text = 'Risat Arsip Penelitian'
-        harvesttype_arsip_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_arsip_text,
-            value='arsip', variable=self.radio_harvest_type)
-        harvesttype_arsip_radio.grid(row=2, column=0, padx=2, pady=2, sticky='w')
-        # Radio button 3 -- 'Laporan Akhir'
-        harvesttype_lapakhir_text = 'Risat Laporan Akhir Penelitian'
-        harvesttype_lapakhir_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_lapakhir_text,
-            value='lapakhir', variable=self.radio_harvest_type)
-        harvesttype_lapakhir_radio.grid(row=3, column=0, padx=2, pady=2, sticky='w')
-        # Setting default radiobutton value
-        self.radio_harvest_type.set('dana')
+        # Dropdown that selects the Risat menu to harvest
+        harvesttype_options = [
+            'Risat Dana Penelitian',
+            'Risat Arsip Penelitian',
+            'Risat Laporan Akhir Penelitian'
+        ]
+        self.dropdown_harvest_type.set('--Pilih--')
+        harvesttype_dropdown = OptionMenu(layout_frame_2, self.dropdown_harvest_type, *harvesttype_options)
+        harvesttype_dropdown.grid(row=4, column=0, padx=2, pady=2, sticky='w')
         
         # :::
         # Layout [3]: The action buttons
@@ -558,10 +572,25 @@ class SipesatScrComService(tk.Frame):
     
     # The function that will be triggered when the 'lanjut' button is hit
     def on_next_button_click(self):
+        # Interpreting the value of the dropdown menu
+        l = self.dropdown_harvest_type.get()  # --- temporary string
+        match l:
+            case 'Risat Dana Pengabdian Masyarakat':
+                m = 'dana'
+            case 'Risat Arsip Pengabdian Masyarakat':
+                m = 'arsip'
+            case 'Risat Laporan Akhir Pengabdian Masyarakat':
+                m = 'lapakhir'
+            case _:
+                no_dropdown_selection_title = 'GALAT'
+                no_dropdown_selection_content = 'Silahkan pilih menu untuk melanjutkan!'
+                messagebox.showerror(no_dropdown_selection_title, no_dropdown_selection_content)
+                return
+
         # Setting the harvest arguments using the controller's 'self' variables
         self.controller.harvest_category = 'c'
         self.controller.harvest_datatype = self.radio_data_type.get()
-        self.controller.harvest_output = self.radio_harvest_type.get()
+        self.controller.harvest_output = m
         
         # Calling the harvester screen, begin the harvesting process
         self.controller.raise_frame(SipesatScrHarvest)
@@ -571,7 +600,7 @@ class SipesatScrComService(tk.Frame):
         
         # The radiobutton variables, used to group different radiobutton together
         self.radio_data_type = IntVar()
-        self.radio_harvest_type = StringVar()
+        self.dropdown_harvest_type = StringVar()
         
         # Instantiating tkinter.Frame instance
         tk.Frame.__init__(self, parent)
@@ -623,23 +652,15 @@ class SipesatScrComService(tk.Frame):
         harvesttype_text = 'Data Hasil Panenan'
         harvesttype_label = ttk.Label(layout_frame_2, text=harvesttype_text, font=FONT_REGULAR)
         harvesttype_label.grid(row=0, column=0, padx=2, pady=5)
-        # Radio button 1 -- 'Dana'
-        harvesttype_dana_text = 'Risat Dana Pengabdian Masyarakat'
-        harvesttype_dana_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_dana_text,
-            value='dana', variable=self.radio_harvest_type)
-        harvesttype_dana_radio.grid(row=1, column=0, padx=2, pady=2, sticky='w')
-        # Radio button 2 -- 'Arsip'
-        harvesttype_arsip_text = 'Risat Arsip Pengabdian Masyarakat'
-        harvesttype_arsip_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_arsip_text,
-            value='arsip', variable=self.radio_harvest_type)
-        harvesttype_arsip_radio.grid(row=2, column=0, padx=2, pady=2, sticky='w')
-        # Radio button 3 -- 'Laporan Akhir'
-        harvesttype_lapakhir_text = 'Risat Laporan Akhir Pengabdian Masyarakat'
-        harvesttype_lapakhir_radio = ttk.Radiobutton(layout_frame_2, text=harvesttype_lapakhir_text,
-            value='lapakhir', variable=self.radio_harvest_type)
-        harvesttype_lapakhir_radio.grid(row=3, column=0, padx=2, pady=2, sticky='w')
-        # Setting default radiobutton value
-        self.radio_harvest_type.set('dana')
+        # Dropdown that selects the Risat menu to harvest
+        harvesttype_options = [
+            'Risat Dana Pengabdian Masyarakat',
+            'Risat Arsip Pengabdian Masyarakat',
+            'Risat Laporan Akhir Pengabdian Masyarakat'
+        ]
+        self.dropdown_harvest_type.set('--Pilih--')
+        harvesttype_dropdown = OptionMenu(layout_frame_2, self.dropdown_harvest_type, *harvesttype_options)
+        harvesttype_dropdown.grid(row=4, column=0, padx=2, pady=2, sticky='w')
         
         # :::
         # Layout [3]: The action buttons
@@ -780,21 +801,30 @@ class SipesatScrHarvest(tk.Frame):
         self.clear_message_area() # --- clearing the content first
         self.message_area.insert(tk.INSERT, long_string)
 
+    # This function sets the y-position of the message area's scrollbar
+    def set_message_area_yview(self, pos):
+        '''
+        :param pos: a float number between 0 and 1
+        '''
+        self.message_area.yview_moveto(pos)
+
     # The function that appends long string to this screen's message area's
     # harvest logging output
     # New line character is concatenated in between the existing message area's
     # content and the string to be appended, by default
-    def append_message_area(self, long_string, new_line=False):
+    def append_message_area(self, long_string, new_line=True):
         # Getting the current content of the message area
-        str_ = self.message_area.get('1.0', tk.END)
-        # Concat with a new line character,
-        # if specified by the argument
-        if new_line:
-            str_ += '\n'
+        str_ = self.message_area.get('1.0', tk.END).strip()
         # Appending 'long_string' to the existing content,
-        # and then applying to the message area GUI element
-        str_ += long_string
+        # Concat with a new line character, if specified by the argument
+        if new_line:
+            str_ += '\n' + long_string
+        else:
+            str_ += long_string
+        # Applying to the message area GUI element
+        # then set the scrollbar position
         self.set_message_area(str_)
+        self.set_message_area_yview(1.0)
     
     # The __init__ function
     def __init__(self, parent, controller):
