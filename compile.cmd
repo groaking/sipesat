@@ -3,4 +3,4 @@ pyinstaller main.py ^
 --log-level INFO ^
 --onefile ^
 --windowed ^
---name sipesat-final-second-draft-20230726
+--name sipesat-final-third-draft-20230822
