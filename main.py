@@ -1,4 +1,5 @@
-# ! The main script of SiPe.Sat Risat harvester
+#!/bin/python
+# The main script of SiPe.Sat Risat harvester
 
 # ---------------------------- DOCUMENTATION ---------------------------- #
 
@@ -561,8 +562,8 @@ class SipesatScrResearch(tk.Frame):
             'Risat Disetujui Dgn Revisi (DDR) Penelitian',
             'Risat Ditolak Penelitian',
             'Risat Dana Penelitian',
-            'Risat Arsip Penelitian',
-            'Risat Laporan Akhir Penelitian'
+            'Risat Laporan Akhir Penelitian',
+            'Risat Arsip Penelitian'
         ]
         self.dropdown_harvest_type.set('--Pilih--')
         harvesttype_dropdown = OptionMenu(layout_frame_2, self.dropdown_harvest_type, *harvesttype_options)
@@ -606,6 +607,8 @@ class SipesatScrComService(tk.Frame):
                 m = 'berdisetujui'
             case 'Risat Berkas Direvisi Pengabdian Masyarakat':
                 m = 'berdirevisi'
+            case 'Risat Ditolak Pengabdian Masyarakat':
+                m = 'ditolak'
             case 'Risat Dana Pengabdian Masyarakat':
                 m = 'dana'
             case 'Risat Arsip Pengabdian Masyarakat':
@@ -688,9 +691,10 @@ class SipesatScrComService(tk.Frame):
             'Risat Usulan Pengabdian Masyarakat',
             'Risat Berkas Disetujui Pengabdian Masyarakat',
             'Risat Berkas Direvisi Pengabdian Masyarakat',
+            'Risat Ditolak Pengabdian Masyarakat',
             'Risat Dana Pengabdian Masyarakat',
-            'Risat Arsip Pengabdian Masyarakat',
-            'Risat Laporan Akhir Pengabdian Masyarakat'
+            'Risat Laporan Akhir Pengabdian Masyarakat',
+            'Risat Arsip Pengabdian Masyarakat'
         ]
         self.dropdown_harvest_type.set('--Pilih--')
         harvesttype_dropdown = OptionMenu(layout_frame_2, self.dropdown_harvest_type, *harvesttype_options)
@@ -956,6 +960,9 @@ class BackEndLoginChecker():
         # Setting the variables according to the passed arguments
         self.password = password
         self.username = username
+
+        # Preamble logging
+        print('[BackEndLoginChecker] :: Validating Risat credential ...')
         
         # Opening the Risat homepage
         risat_homepage = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
@@ -1094,7 +1101,7 @@ class BackEndHarvester():
             
             # Determining the cases of the datatype
             if datatype == 0: # --- 'data ringkasan'
-            
+
                 # Determining the cases of the data output
                 match output:
                     case 'usulan':
@@ -1103,6 +1110,8 @@ class BackEndHarvester():
                         self.run_harvest_c_0_berdisetujui(control, username, password)
                     case 'berdirevisi':
                         self.run_harvest_c_0_berdirevisi(control, username, password)
+                    case 'ditolak':
+                        self.run_harvest_c_0_ditolak(control, username, password)
                     case 'arsip':
                         self.run_harvest_c_0_arsip(control, username, password)
                     case 'dana':
@@ -1120,6 +1129,8 @@ class BackEndHarvester():
                         self.run_harvest_c_1_berdisetujui(control, username, password)
                     case 'berdirevisi':
                         self.run_harvest_c_1_berdirevisi(control, username, password)
+                    case 'ditolak':
+                        pass
                     case 'arsip':
                         self.run_harvest_c_1_arsip(control, username, password)
                     case 'dana':
@@ -1252,6 +1263,9 @@ class BackEndHarvester():
     # - Requires two arguments: the username and password credentials
     # - Returns 'data_prompt' array
     def get_risat_login(self, username, password):
+        # Preamble logging
+        print(f'[BackEndHarvester] :: Logging in to Risat as {username} to start a new ASPX session ...')
+
         # Opening the Risat homepage
         print('+ Opening Risat homepage...')
         risat_homepage = 'https://risat.uksw.edu/login.aspx?ReturnUrl=%2f'
@@ -2517,6 +2531,46 @@ class BackEndHarvester():
         }
 
         # Returning the http response string
+        return data_prompt
+
+    # This function opens "Ditolak Pengabdian" menu after opening the tab "Pengabdian"
+    # - Requires 'data_prompt' array as an unary argument obtained from get_risat_pengabdian() function
+    # - Returns also another 'data_prompt' array
+    def get_risat_pengabdian_ditolak_pengabdian(self, data_prompt):
+        # Logging the calling of the function
+        print('+ Opening "Pengabdian --> Ditolak Pengabdian" menu...')
+
+        # Preparing the http handler URL and payload
+        HANDLER_URL = 'https://risat.uksw.edu/bp3mpageabdimas.aspx'
+        PAYLOAD = {
+            # The values below are computer-generated
+            '__VIEWSTATE' : data_prompt['viewstate'],
+            '__VIEWSTATEGENERATOR' : data_prompt['viewstategen'],
+            '__EVENTVALIDATION' : data_prompt['eventvalidation'],
+            '__EVENTTARGET' : 'ctl00$ContentPlaceHolder1$menu8'
+        }
+
+        # Posting the http payloads
+        print('+ Posting http payloads...')
+        post = self.session.post(HANDLER_URL, data=PAYLOAD)
+        response = post.text # --- Obtaining the response text
+        content = html.fromstring(response) # --- Scraping the HTML code
+
+        # Obtaining the computer-generated hidden values of ASPX (after login)
+        viewstate = content.xpath('//*[@id="__VIEWSTATE"]/@value')[0]
+        viewstategen = content.xpath('//*[@id="__VIEWSTATEGENERATOR"]/@value')[0]
+        eventvalidation = content.xpath('//*[@id="__EVENTVALIDATION"]/@value')[0]
+
+        # Building the 'data_prompt' array
+        data_prompt = {
+            'http_response' : response,
+            'html_content' : content,
+            'viewstate' : viewstate,
+            'viewstategen' : viewstategen,
+            'eventvalidation' : eventvalidation
+        }
+
+        # Returning 'data_prompt' array
         return data_prompt
 
     # This function opens "Dana Pengabdian" menu after opening the tab "Pengabdian"
@@ -4260,7 +4314,7 @@ class BackEndHarvester():
         control.set_progress_bar(20)
         workbook = xl.Workbook()
         sheet = workbook.active
-        sheet.title = 'Berkas Ditolak Penelitian Ringkasan'
+        sheet.title = 'Ditolak Penelitian Ringkasan'
 
         # Preparing the sheet header
         control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
@@ -11805,6 +11859,307 @@ class BackEndHarvester():
             output_spreadsheet = filedialog.asksaveasfilename(
                 filetypes=[('Excel files', '*.xlsx')],
                 initialfile='Sipesat - Berkas Direvisi Pengabdian Ringkasan Risat.xlsx',
+                title='Simpan sebagai ...'
+            )
+
+            # 'cancel' button in the dialog prompt is clicked
+            if len(output_spreadsheet) == 0:
+                # Showing confirmation
+                x = messagebox.askyesno(
+                    'Nama File Kosong',
+                    'Apakah Anda yakin ingin melanjutkan tanpa menyimpan file spreadsheet hasil pemanenan?'
+                )
+                # Determining whether to break or to continue the loop
+                # based on the inversed value of 'x'
+                if x:
+                    control.append_message_area(f'+ Finalisasi pemanenan data tanpa menyimpan file spreadsheet luaran ...')
+                    workbook.close()  # --- closing the workbook without saving
+                    break
+                else:
+                    continue  # --- continuing the loop
+            # File name does not end in spreadsheet extension
+            elif output_spreadsheet[-5:] != '.xlsx':
+                output_spreadsheet = output_spreadsheet + '.xlsx'
+
+            # Saving the spreadsheet
+            control.append_message_area(f'LOKASI_SPREADSHEET_LUARAN: {output_spreadsheet}')
+            control.set_progress_bar(95)
+            workbook.save(output_spreadsheet)
+
+            # Closing the openpyxl workbook
+            control.append_message_area(f'+ Menutup file spreadsheet ...')
+            control.set_progress_bar(98)
+            workbook.close()
+
+            # Breaking the loop
+            break
+
+        # Notify for a successful scraping
+        control.append_message_area(f'+ Pemanenan selesai pada: {str(dt.now())}')
+        control.set_progress_bar(100)
+        control.on_notify_successful_scraping()
+
+    # This function harvests "Risat Ditolak Pengabdian > Ringkasan Data" data
+    # and then store the harvested data as an excel file
+    #
+    # Required arguments:
+    # - control             --> for updating the progress bar and
+    #                           message area of the screen SipesatScrHarvest
+    # - username, password  --> the Risat administrator username and password
+    def run_harvest_c_0_ditolak(self, control, username, password):
+        # SipesatScrHarvest messenger
+        control.set_header_desc('Panen Data "Risat Ditolak Pengabdian > Ringkasan Data"')
+        control.set_help_label('Data sedang dipanen. Silahkan menunggu.')
+        control.set_progress_bar(0)
+        control.clear_message_area()
+
+        # Preamble logging
+        control.append_message_area(f'+ Memulai pemanenan data ...')
+        control.append_message_area(f'+ Pemanenan dimulai pada: {str(dt.now())}')
+        control.set_progress_bar(5)
+
+        # Preparing the 'data_prompt' arrays
+        control.append_message_area(f'+ Log masuk Risat sebagai [{username}] ...')
+        control.set_progress_bar(10)
+        data_prompt = self.get_risat_login(username, password)
+        data_prompt = self.get_risat_pengabdian(data_prompt)
+        data_prompt = self.get_risat_pengabdian_ditolak_pengabdian(data_prompt)
+
+        # Parsing XML tree content
+        control.append_message_area(f'+ Membaca halaman web ...')
+        control.set_progress_bar(15)
+        content = data_prompt['html_content']
+
+        # Establishing the export spreadsheet file
+        control.append_message_area(f'+ Mempersiapkan file spreadsheet luaran ...')
+        control.set_progress_bar(20)
+        workbook = xl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Ditolak Pengabdian Ringkasan'
+
+        # Preparing the sheet header
+        control.append_message_area(f'+ Mempersiapkan kepala lembar spreadsheet ...')
+        control.set_progress_bar(25)
+        # ---
+        # Preparing the "NOMOR" header
+        sheet.merge_cells(
+            start_row=1, start_column=1, end_row=2, end_column=1
+        )
+        sheet['A1'].value = 'No.'
+        sheet['A1'].alignment = Alignment(horizontal='center')
+        # ---
+        # Preparing the "JUDUL" header
+        sheet.merge_cells(
+            start_row=1, start_column=2, end_row=1, end_column=11
+        )
+        sheet['B1'].value = 'IDENTITAS'
+        sheet['B1'].alignment = Alignment(horizontal='center')
+        # Preparing the "JUDUL" sub-headers
+        sheet['B2'].value = 'Judul'
+        sheet['C2'].value = 'Ketua'
+        sheet['D2'].value = 'Jml. Anggota'
+        sheet['E2'].value = 'Tgl. Usulan'
+        sheet['F2'].value = 'Bidang Fokus'
+        sheet['G2'].value = 'Rencana Biaya'
+        sheet['H2'].value = 'Lama Kegiatan'
+        sheet['I2'].value = 'Biaya Setelah Revisi'
+        sheet['J2'].value = 'Catatan Revisi'
+        sheet['K2'].value = 'File Revisi'
+        # ---
+        # Preparing the "REVIEWER 1" header
+        sheet.merge_cells(
+            start_row=1, start_column=12, end_row=1, end_column=15
+        )
+        sheet['L1'].value = 'REVIEWER 1'
+        sheet['L1'].alignment = Alignment(horizontal='center')
+        # Preparing the "REVIEWER 1" sub-headers
+        sheet['L2'].value = 'Nama Reviewer'
+        sheet['M2'].value = 'Nilai'
+        sheet['N2'].value = 'Rekomendasi Dana'
+        sheet['O2'].value = 'Komentar'
+        # ---
+        # Preparing the "REVIEWER 2" header
+        sheet.merge_cells(
+            start_row=1, start_column=16, end_row=1, end_column=19
+        )
+        sheet['P1'].value = 'REVIEWER 2'
+        sheet['P1'].alignment = Alignment(horizontal='center')
+        # Preparing the "REVIEWER 2" sub-headers
+        sheet['P2'].value = 'Nama Reviewer'
+        sheet['Q2'].value = 'Nilai'
+        sheet['R2'].value = 'Rekomendasi Dana'
+        sheet['S2'].value = 'Komentar'
+
+        # The base XPath location, pointing to each entry row
+        base = '//div[@class="mw-100"]//div[@class="form-group f12"]/table[@width="100%"]//tr[@valign="top"]'
+
+        # ---
+        # Obtaining the data row values
+        control.append_message_area(f'+ Mendapatkan data pada baris tabel ...')
+        control.set_progress_bar(30)
+
+        # HYPOTHESIS:
+        # Xpath cannot detect 'tbody' element.
+        # So instead of using 'table/tbody/tr', use 'table//tr' instead
+        #
+        # RESULT:
+        # The hypothesis is correct.
+        # Therefore, don't mention 'tbody' in any of the following Xpath paths
+
+        a1 = [str(i)
+              for i in range(1, len(content.xpath(base))+1)]
+
+        b2 = [l.strip()
+              for l in content.xpath(base + '//span[@class="hijau"]/text()')]
+
+        c2 = [l.replace('Ketua:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[2]/td/table//tr/td[1]/text()')]
+
+        d2 = [l.replace('Jumlah Anggota:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[2]/td/table//tr/td[3]/text()')]
+
+        e2 = [l.replace('Tgl Usulan:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[3]/td[1]/text()')]
+
+        f2 = [l.replace('Bidang Fokus:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[4]/td[1]/text()')]
+
+        g2 = [l.replace('Rencana Biaya:', '').replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[5]/td[1]/text()')]
+
+        h2 = [l.replace('Lama Kegiatan:', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[6]/td[1]/text()[1]')]
+
+        i2 = [l.replace('Rp.', '').replace(',', '').strip()
+              for l in content.xpath(base + '/td[2]/table//tr[10]/td/table//tr[1]/td[3]/text()')]
+
+        j2 = [l.strip()
+              for l in content.xpath(base + '/td[2]/table//tr[10]/td/table//tr[2]/td[3]/text()')]
+
+        k2 = [l.strip()
+              for l in content.xpath(base + '/td[2]/table//tr[10]/td/table//tr[3]/td[3]/a/@href')]
+
+        # The 'Reviewer 1' all-content stripper
+        rev_1 = [l.strip() for l in content.xpath(base + '/td[2]/table//tr[8]/td/table[@width="100%"]//tr[1]/td[1]/text()')]
+
+        # Calculation for data pattern search
+        # This is equal to the number of entries
+        # 'rev_1_n' is always a multiple of 5
+        rev_1_n = int(len(rev_1) / 5)
+
+        l2 = []
+        for i in range(rev_1_n):
+            loc = 1 + (i * 5)  # --- the location of the data in the array
+            l2.append(rev_1[loc].strip())
+
+        m2 = []
+        for i in range(rev_1_n):
+            loc = 2 + (i * 5)  # --- the location of the data in the array
+            m2.append(rev_1[loc].strip())
+
+        n2 = []
+        for i in range(rev_1_n):
+            loc = 3 + (i * 5)  # --- the location of the data in the array
+            n2.append(rev_1[loc].replace('Rp.', '').replace(',', '').strip())
+
+        o2 = []
+        for i in range(rev_1_n):
+            loc = 4 + (i * 5)  # --- the location of the data in the array
+            o2.append(rev_1[loc].strip())
+
+        # The 'Reviewer 2' all-content stripper
+        rev_2 = [l.strip() for l in content.xpath(base + '/td[2]/table//tr[8]/td/table[@width="100%"]//tr[1]/td[3]/text()')]
+
+        # Calculation for data pattern search
+        # This is equal to the number of entries
+        # 'rev_2_n' is always a multiple of 5
+        rev_2_n = int(len(rev_2) / 5)
+
+        p2 = []
+        for i in range(rev_2_n):
+            loc = 1 + (i * 5)  # --- the location of the data in the array
+            p2.append(rev_2[loc].strip())
+
+        q2 = []
+        for i in range(rev_2_n):
+            loc = 2 + (i * 5)  # --- the location of the data in the array
+            q2.append(rev_2[loc].strip())
+
+        r2 = []
+        for i in range(rev_2_n):
+            loc = 3 + (i * 5)  # --- the location of the data in the array
+            r2.append(rev_2[loc].replace('Rp.', '').replace(',', '').strip())
+
+        s2 = []
+        for i in range(rev_2_n):
+            loc = 4 + (i * 5)  # --- the location of the data in the array
+            s2.append(rev_2[loc].strip())
+
+        # The starting row coordinate of the active sheet
+        row_start = 3
+
+        # DEBUG
+        # Please comment out after use
+        # ---
+        # print(a1, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2, o2, p2, q2, r2, s2)
+
+        # Iterating through each table row and write to the table
+        # Assumes the lists a1, b2, c2, ... have the same array size
+        control.append_message_area(f'+ Melakukan iterasi terhadap baris tabel dan menulis spreadsheet luaran ...')
+        control.set_progress_bar(35)
+        for i in range(len(a1)):
+
+            # Noisy preamble logging
+            # Please don't use this -_-
+            # ---
+            # control.append_message_area(f'ITERASI [{i}]')
+
+            # Updating the progress bar status
+            control.set_progress_bar(35 + round(45*(i+1)/(len(a1))))
+
+            # Painting the scraped data to the output spreadsheet row
+            sheet[f'A{row_start}'] = a1[i]
+            sheet[f'B{row_start}'] = b2[i]
+            sheet[f'C{row_start}'] = c2[i]
+            sheet[f'D{row_start}'] = d2[i]
+            sheet[f'E{row_start}'] = e2[i]
+            sheet[f'F{row_start}'] = f2[i]
+            sheet[f'G{row_start}'] = g2[i]
+            sheet[f'H{row_start}'] = h2[i]
+            sheet[f'I{row_start}'] = i2[i]
+            sheet[f'J{row_start}'] = j2[i]
+            sheet[f'K{row_start}'] = k2[i]
+            sheet[f'L{row_start}'] = l2[i]
+            sheet[f'M{row_start}'] = m2[i]
+            sheet[f'N{row_start}'] = n2[i]
+            sheet[f'O{row_start}'] = o2[i]
+            sheet[f'P{row_start}'] = p2[i]
+            sheet[f'Q{row_start}'] = q2[i]
+            sheet[f'R{row_start}'] = r2[i]
+            sheet[f'S{row_start}'] = s2[i]
+
+            # Incrementing the 'row_start' iterator
+            # Then continue the loop
+            row_start += 1
+            continue
+
+        # Post-loop logging: successfully painted the output spreadsheet file
+        control.append_message_area(f'+ Tabel sukses dipanen!')
+        control.set_progress_bar(85)
+
+        # Asking for the spreadsheet name to save as
+        # ---
+        # Logging and setting the progress bar
+        control.append_message_area(f'+ Menyimpan spreadsheet luaran ...')
+        control.set_progress_bar(90)
+        # Dealing with file name prompt and saving
+        # Using loop to mitigate the user clicking 'cancel'
+        # in the file name dialog prompt
+        while True:
+            # Opening the dialog prompt
+            output_spreadsheet = filedialog.asksaveasfilename(
+                filetypes=[('Excel files', '*.xlsx')],
+                initialfile='Sipesat - Ditolak Pengabdian Ringkasan Risat.xlsx',
                 title='Simpan sebagai ...'
             )
 
