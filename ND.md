@@ -18,7 +18,7 @@
 >   > ...
 >   should be wrapped in 'try-except' clause, to prevent future data empty cases
 
-> [2] On 2023-07-03:
+> [2] On 2023-07-03: ✅ [2023-09-06][Patched to the main program]
 > As per Guitar's request, add the following functions (both on 'Penelitian' and 'Pengabdian' menu):
 > 1. Usulan penelitian
 > 2. Berkas direvisi
